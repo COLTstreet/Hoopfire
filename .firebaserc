@@ -1,0 +1,14 @@
+{
+  "targets": {
+    "hoopfire-api": {
+      "hosting": {
+        "hoopfire-2024": [
+          "hoopfire-api"
+        ]
+      }
+    }
+  },
+  "projects": {
+    "default": "hoopfire-api"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "hosting": [
+    {
+      "target": "hoopfire-2024",
+      "source": ".",
+      "frameworksBackend": {
+        "region": "us-east1"
+      }
+    }
+  ]
+}

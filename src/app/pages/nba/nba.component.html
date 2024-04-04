@@ -1,0 +1,74 @@
+<div class="surface-ground">
+    <div class="grid m-0">
+        <div class="col-12">
+            <p-button icon="pi pi-calendar" [rounded]="true" [text]="true" (onClick)="calculateTodaysGames()"></p-button>
+        </div>
+        <div class="col-12 lg:col-6">
+            <div id="leftCard" class="surface-card p-4 shadow-2 border-round opacity-90 relative z-5">
+                <div class="grid">
+                    <div class="col-3">
+                        <span class="text-7xl">{{leftScore}}</span>
+                    </div>
+                    <div class="col-9">
+                        <p-dropdown [style]="{'minWidth':'100%'}" [options]="allFirestoreTeams"
+                            [(ngModel)]="selectedLeftTeam" optionLabel="name" [filter]="true" filterBy="name"
+                            [showClear]="true" placeholder="Select a Team" autoWidth="false"
+                            (onChange)="calculateOdds()">
+                            <ng-template pTemplate="selectedItem" let-selectedOption>
+                                <div class="flex align-items-center gap-2">
+                                    <div>{{ selectedOption.team }}</div>
+                                </div>
+                            </ng-template>
+                            <ng-template let-leftTeam pTemplate="item">
+                                <div class="flex align-items-center gap-2">
+                                    <div>{{ leftTeam.team }}</div>
+                                </div>
+                            </ng-template>
+                        </p-dropdown>
+                        <div *ngIf="selectedLeftTeam" class="text-center"><img class="w-3 m-3"
+                                src="{{selectedLeftTeam.WikipediaLogoUrl}}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 lg:col-6">
+            <div id="rightCard" class="surface-card p-4 shadow-2 border-round opacity-90 relative z-4">
+                <div class="grid">
+                    <div class="col-3">
+                        <span class="text-7xl">{{rightScore}}</span>
+                    </div>
+                    <div class="col-9">
+                        <p-dropdown [style]="{'minWidth':'100%'}" [options]="allFirestoreTeams"
+                            [(ngModel)]="selectedRightTeam" optionLabel="name" [filter]="true" filterBy="name"
+                            [showClear]="true" placeholder="Select a Team" autoWidth="false"
+                            (onChange)="calculateOdds()">
+                            <ng-template pTemplate="selectedItem" let-selectedOption>
+                                <div class="flex align-items-center gap-2">
+                                    <div>{{ selectedOption.team }}</div>
+                                </div>
+                            </ng-template>
+                            <ng-template let-rightTeam pTemplate="item">
+                                <div class="flex align-items-center gap-2">
+                                    <div>{{ rightTeam.team }}</div>
+                                </div>
+                            </ng-template>
+                        </p-dropdown>
+                        <div *ngIf="selectedRightTeam" class="text-center"><img class="w-3 m-3"
+                                src="{{selectedRightTeam.WikipediaLogoUrl}}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="grid m-0">
+        <div class="col-12">
+            <p-button label="Add To Table" (onClick)="addMatchup('User Generated')" class="full-width"></p-button>
+        </div>
+        <div class="col-12">
+            <ag-grid-angular #agGrid style="width: 100%; height: 350px;" class="ag-theme-balham" [rowData]="matchups"
+                [columnDefs]="columnDefs" [defaultColDef]="defaultColDef" [rowSelection]="rowSelection"
+                (gridReady)="onGridReady($event)">
+            </ag-grid-angular>
+        </div>
+    </div>
+</div>
