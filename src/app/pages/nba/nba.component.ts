@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
 import { ButtonModule } from 'primeng/button';
+import { match } from 'assert';
 
 declare var stringSimilarity: any
 
@@ -38,6 +39,7 @@ export class NbaComponent {
 
   spread: any | undefined
   winner: any | undefined
+  loser: any | undefined
   confidenceScore: any | undefined
   overUnder: any | undefined
   totalPoints: any | undefined
@@ -117,7 +119,7 @@ export class NbaComponent {
   }
 
   calculateTodaysGames() {
-    this.gridApi.setGridOption("rowData", []);
+    // this.gridApi.setGridOption("rowData", []);
     let leftTeam: any;
     let rightTeam: any;
     let gameTime: any;
@@ -153,20 +155,30 @@ export class NbaComponent {
     var matchup = {
       "leftTeam": this.selectedLeftTeam.team,
       "leftScore": this.leftScore,
-      "spread": this.winner.team + " " + this.spread,
+      "leftSpread": "",
+      "rightSpread": "",
       "totalPoints": this.totalPoints,
       "rightScore": this.rightScore,
       "rightTeam": this.selectedRightTeam.team,
       "confidence": this.confidenceScore + "%",
       "gameTime": "User Generated",
-      "remove": ""
+      "remove": "",
+      "leftWikipediaLogoUrl": this.selectedLeftTeam.WikipediaLogoUrl,
+      "rightWikipediaLogoUrl": this.selectedRightTeam.WikipediaLogoUrl
     };
+    if(matchup.leftScore > matchup.rightScore) {
+      matchup.leftSpread = this.spread,
+      matchup.rightSpread = this.spread.replace("-","+")
+    } else {
+      matchup.rightSpread = this.spread,
+      matchup.leftSpread = this.spread.replace("-","+")
+    }
 
     if(gameTime) {
       matchup.gameTime = gameTime;
     }
     this.matchups.push(matchup)
-    this.gridApi.setGridOption("rowData", this.matchups);
+    // this.gridApi.setGridOption("rowData", this.matchups);
   }
 
   setSelectedLeftTeam() {
@@ -249,10 +261,12 @@ export class NbaComponent {
       if (leftScoreDecimal > rightScoreDecimal) {
         this.spread = "-" + (Math.round(decSpread * 2) / 2).toFixed(1);
         this.winner = leftTeam;
+        this.loser = rightTeam;
         this.confidenceScore = this.leftWinChance;
       } else {
         this.spread = "-" + (Math.round(decSpread * 2) / 2).toFixed(1);
         this.winner = rightTeam;
+        this.loser = leftTeam;
         this.confidenceScore = this.rightWinChance;
       }
 
