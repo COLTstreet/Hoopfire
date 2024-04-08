@@ -1,8 +1,8 @@
 {
-  "name": "hoopfire-2024",
-  "short_name": "hoopfire-2024",
-  "theme_color": "#1976d2",
-  "background_color": "#fafafa",
+  "name": "Hoopfire",
+  "short_name": "Hoopfire",
+  "theme_color": "#FFD54F",
+  "background_color": "#121212",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
