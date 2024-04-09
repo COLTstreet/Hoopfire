@@ -5,16 +5,20 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
 import { ButtonModule } from 'primeng/button';
-import { match } from 'assert';
+import { TooltipModule } from 'primeng/tooltip';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 declare var stringSimilarity: any
 
 @Component({
   selector: 'app-nba',
   standalone: true,
-  imports: [DropdownModule, FormsModule, CommonModule, AgGridAngular, ButtonModule],
+  imports: [DropdownModule, FormsModule, CommonModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule],
   templateUrl: './nba.component.html',
-  styleUrl: './nba.component.scss'
+  styleUrl: './nba.component.scss',
+  providers: [ConfirmationService, MessageService]
 })
 export class NbaComponent {
 
@@ -76,7 +80,7 @@ export class NbaComponent {
     cellStyle: {fontSize: '11px'}
   };
 
-  constructor(public _dataService: DataService) {
+  constructor(public _dataService: DataService, private confirmationService: ConfirmationService, private messageService: MessageService) {
 
     this.neutral = true
 
@@ -120,6 +124,7 @@ export class NbaComponent {
 
   calculateTodaysGames() {
     // this.gridApi.setGridOption("rowData", []);
+    this.matchups = []
     let leftTeam: any;
     let rightTeam: any;
     let gameTime: any;
@@ -130,7 +135,7 @@ export class NbaComponent {
       rightTeam = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
       leftTeam = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((leftTeam.City + ' ' + leftTeam.Name).toLowerCase()))[0]
       rightTeam = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((rightTeam.City + ' ' + rightTeam.Name).toLowerCase()))[0]
-      gameTime = ele.DateTime;
+      gameTime = new Date(ele.DateTime).toLocaleTimeString()
       todaysMatchups.push([leftTeam, rightTeam, gameTime])
     }
 
@@ -214,9 +219,48 @@ export class NbaComponent {
     console.log(this.selectedRightTeam)
   }
 
+  clearLeftSide() {
+    this.selectedLeftTeam = null;
+    this.leftScore = null;
+    this.leftTeamsList = null;
+    this.leftWinChance = null;
+    this.leftWinner = null;
+  }
+
+  clearRightSide() {
+    this.selectedRightTeam = null;
+    this.rightScore = null;
+    this.rightTeamsList = null;
+    this.rightWinChance = null;
+    this.rightWinner = null;
+  }
+
+  clearAllGames() {
+    this.matchups = []
+  }
+
+  confirmRemoveSingleGame(evt: any, idx: number) {
+    this.confirmationService.confirm({
+        target: evt.target as EventTarget,
+        message: 'Are you sure that you want to proceed?',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        acceptIcon:"none",
+        rejectIcon:"none",
+        rejectButtonStyleClass:"p-button-text",
+        accept: () => {
+            this.messageService.add({ severity: 'info', summary: 'Confirmed', detail: 'You have deleted a game' });
+            this.matchups.splice(idx, 1);
+        },
+        reject: () => {
+            // this.messageService.add({ severity: 'error', summary: 'Rejected', detail: 'You have rejected', life: 3000 });
+        }
+    });
+  }
+
   calculateOdds() {
-    if(this.selectedLeftTeam) this.setSelectedLeftTeam()
-    if(this.selectedRightTeam) this.setSelectedRightTeam()
+    this.selectedLeftTeam ? this.setSelectedLeftTeam() : this.clearLeftSide()
+    this.selectedRightTeam ? this.setSelectedRightTeam() : this.clearRightSide()
     if (this.selectedLeftTeam && this.selectedRightTeam) {
       let rightTeam: any, leftTeam: any
       let adv = .010;
@@ -231,8 +275,8 @@ export class NbaComponent {
       var adjHomeOff = Number(leftTeam.oRtg) + Number(leftTeam.oRtg) * adv;
       var adjHomeDef = Number(leftTeam.dRtg) - Number(leftTeam.dRtg) * adv;
 
-      var adjAwayOff = Number(rightTeam.oRtg) - Number(rightTeam.oRtg) * adv;
-      var adjAwayDef = Number(rightTeam.dRtg) + Number(rightTeam.dRtg) * adv;
+      var adjAwayOff = Number(rightTeam.oRtg) + Number(rightTeam.oRtg) * adv;
+      var adjAwayDef = Number(rightTeam.dRtg) - Number(rightTeam.dRtg) * adv;
 
       let pythExp = 10.25;
       let adjHomePyth = Math.pow(adjHomeOff, pythExp) / (Math.pow(adjHomeOff, pythExp) + Math.pow(adjHomeDef, pythExp));

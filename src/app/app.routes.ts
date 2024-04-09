@@ -5,7 +5,7 @@ import { NbaComponent } from './pages/nba/nba.component';
 export const routes: Routes = [
     {
         path: "",
-        redirectTo: "/ncaa",
+        redirectTo: "/nba",
         pathMatch: "full"
     },
     {

@@ -5,15 +5,20 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 declare var stringSimilarity: any
 
 @Component({
   selector: 'app-ncaa',
   standalone: true,
-  imports: [DropdownModule, FormsModule, CommonModule, AgGridAngular, ButtonModule],
+  imports: [DropdownModule, FormsModule, CommonModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule],
   templateUrl: './ncaa.component.html',
-  styleUrl: './ncaa.component.scss'
+  styleUrl: './ncaa.component.scss',
+  providers: [ConfirmationService, MessageService]
 })
 export class NCAAComponent implements OnInit {
 
@@ -76,13 +81,13 @@ export class NCAAComponent implements OnInit {
     cellStyle: {fontSize: '11px'}
   };
 
-  constructor(public _dataService: DataService) {
+  constructor(public _dataService: DataService, private confirmationService: ConfirmationService, private messageService: MessageService) {
 
     this.neutral = true
     
     this.conferenceMap.set("American Athletic", "The American" )
     this.conferenceMap.set("Atlantic Coast", "ACC" )
-    this.conferenceMap.set("Big Ten", "Big Ten" )
+    this.conferenceMap.set("Big Ten", "B10" )
     this.conferenceMap.set("Big 12", "Big 12" )
     this.conferenceMap.set("Conference USA", "CUSA" )
     this.conferenceMap.set("Mid-American", "MAC" )
@@ -93,7 +98,7 @@ export class NCAAComponent implements OnInit {
     this.conferenceMap.set("America East",	"America East AmEast" )
     this.conferenceMap.set("Atlantic Sun",	"ASUN" )
     this.conferenceMap.set("Atlantic 10",	"A-10" )
-    this.conferenceMap.set("Big East",	"Big East" )
+    this.conferenceMap.set("Big East",	"BE" )
     this.conferenceMap.set("Big West", "BWC" )
     this.conferenceMap.set("Coastal Athletic Association",	"CAA" )
     this.conferenceMap.set("Horizon League",	"Horizon" )
@@ -153,7 +158,7 @@ export class NCAAComponent implements OnInit {
   }
 
   calculateTodaysGames() {
-    this.gridApi.setRowData([]);
+    // this.gridApi.setRowData([]);
     let homeTeam: any;
     let awayTeam: any;
     let gameTime: any;
@@ -165,7 +170,7 @@ export class NCAAComponent implements OnInit {
       if(homeTeam) homeTeam = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(homeTeam.School.split(" ")[0].toLowerCase()))[0]
       if(awayTeam) awayTeam = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(awayTeam.School.split(" ")[0].toLowerCase()))[0]
       if(homeTeam && awayTeam) {
-        gameTime = ele.DateTime;
+        gameTime = new Date(ele.DateTime).toLocaleTimeString();
         todaysMatchups.push([homeTeam, awayTeam, gameTime])
       }
     }
@@ -191,20 +196,30 @@ export class NCAAComponent implements OnInit {
     var matchup = {
       "leftTeam": this.selectedLeftTeam.team,
       "leftScore": this.leftScore,
-      "spread": this.winner.team + " " + this.spread,
+      "leftSpread": "",
+      "rightSpread": "",
       "totalPoints": this.totalPoints,
       "rightScore": this.rightScore,
       "rightTeam": this.selectedRightTeam.team,
       "confidence": this.confidenceScore + "%",
       "gameTime": "User Generated",
-      "remove": ""
+      "remove": "",
+      "leftTeamLogoUrl": this.selectedLeftTeam.TeamLogoUrl,
+      "rightTeamLogoUrl": this.selectedRightTeam.TeamLogoUrl
     };
+    if(matchup.leftScore > matchup.rightScore) {
+      matchup.leftSpread = this.spread,
+      matchup.rightSpread = this.spread.replace("-","+")
+    } else {
+      matchup.rightSpread = this.spread,
+      matchup.leftSpread = this.spread.replace("-","+")
+    }
 
     if(gameTime) {
       matchup.gameTime = gameTime;
     }
     this.matchups.push(matchup)
-    this.gridApi.setGridOption("rowData", this.matchups);
+    // this.gridApi.setGridOption("rowData", this.matchups);
   }
 
   setSelectedLeftTeam() {
@@ -230,6 +245,50 @@ export class NCAAComponent implements OnInit {
         }
       }
     }
+    for (const ele of this.allTeamSeasonStats) {
+      if(ele.GlobalTeamID === this.selectedRightTeam.GlobalTeamID) {
+          this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
+      }
+    }
+  }
+
+  clearLeftSide() {
+    this.selectedLeftTeam = null;
+    this.leftScore = null;
+    this.leftTeamsList = null;
+    this.leftWinChance = null;
+    this.leftWinner = null;
+  }
+
+  clearRightSide() {
+    this.selectedRightTeam = null;
+    this.rightScore = null;
+    this.rightTeamsList = null;
+    this.rightWinChance = null;
+    this.rightWinner = null;
+  }
+
+  clearAllGames() {
+    this.matchups = []
+  }
+
+  confirmRemoveSingleGame(evt: any, idx: number) {
+    this.confirmationService.confirm({
+        target: evt.target as EventTarget,
+        message: 'Are you sure that you want to proceed?',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        acceptIcon:"none",
+        rejectIcon:"none",
+        rejectButtonStyleClass:"p-button-text",
+        accept: () => {
+            this.messageService.add({ severity: 'info', summary: 'Confirmed', detail: 'You have deleted a game' });
+            this.matchups.splice(idx, 1);
+        },
+        reject: () => {
+            // this.messageService.add({ severity: 'error', summary: 'Rejected', detail: 'You have rejected', life: 3000 });
+        }
+    });
   }
 
   calculateOdds() {

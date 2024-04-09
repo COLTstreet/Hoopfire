@@ -7,7 +7,14 @@
 @import 'ag-grid-community/styles/ag-grid.css';
 @import 'ag-grid-community/styles/ag-theme-balham.css';
 
-html, body {
+html,
+body {
     font-size: 12px;
     margin: 0;
+}
+
+.remove-game-button {
+    position: absolute;
+    right: 1px;
+    top: 1px;
 }
