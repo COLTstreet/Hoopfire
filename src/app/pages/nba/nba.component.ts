@@ -10,6 +10,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
+import * as XLSX from 'xlsx';
+
 declare var stringSimilarity: any
 
 @Component({
@@ -340,6 +342,28 @@ export class NbaComponent {
       this.overUnder = (rightScoreDecimal + leftScoreDecimal).toFixed(2);
       this.totalPoints = this.leftScore + this.rightScore;
     }
+  }
+  
+  exportToExcel() {
+    if(this.matchups.length > 0) {
+      const columns = this.getColumns(this.matchups);
+      const worksheet = XLSX.utils.json_to_sheet(this.matchups, { header: columns });
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      XLSX.writeFile(workbook, 'games.xlsx');
+    }
+  }
+  
+  getColumns(data: any[]): string[] {
+    const columns: any[] = [];
+    data.forEach(row => {
+      Object.keys(row).forEach(col => {
+        if (!columns.includes(col)) {
+          columns.push(col);
+        }
+      });
+    });
+    return columns;
   }
 
 }

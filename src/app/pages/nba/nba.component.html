@@ -6,6 +6,8 @@
             <div class="flex justify-content-between">
                 <p-button icon="pi pi-calendar" [rounded]="true" [text]="true" pTooltip="Run Today's Games"
                     (onClick)="calculateTodaysGames()"></p-button>
+                <p-button icon="pi pi-file-excel" [rounded]="true" [text]="true" pTooltip="Clear All Games"
+                    (onClick)="exportToExcel()"></p-button>
                 <p-button icon="pi pi-times-circle" [rounded]="true" [text]="true" pTooltip="Clear All Games"
                     (onClick)="clearAllGames()"></p-button>
             </div>
@@ -99,8 +101,12 @@
                         </div>
                     </div>
                 </div>
+                <div class="flex justify-content-between pt-4">
+                    <div class="text-xl font-medium">Total Points: {{game.totalPoints}}</div>
+                    <div class="text-xl font-medium">Confidence: {{game.confidence}}</div>
+                </div>
                 <div class="flex justify-content-center pt-4">
-                    <span class="text-xl text-2xl font-medium mb-1">{{game.gameTime}}</span>
+                    <div class="text-xl text-2xl font-medium mb-1">{{game.gameTime}}</div>
                 </div>
             </div>
         </div>
