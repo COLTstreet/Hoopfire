@@ -1,23 +1,25 @@
 import { Component } from '@angular/core';
 import { DataService } from '../../services/data.service';
-import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { Button } from 'primeng/button';
+import { Tooltip } from 'primeng/tooltip';
+import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
+import { Toast } from 'primeng/toast';
+import { Card } from 'primeng/card';
+import { Chip } from 'primeng/chip';
 
 import * as XLSX from 'xlsx';
+import { Select } from 'primeng/select';
 
 declare var stringSimilarity: any
 
 @Component({
   selector: 'app-nba',
   standalone: true,
-  imports: [DropdownModule, FormsModule, CommonModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule],
+  imports: [Select, FormsModule, CommonModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Toast, Card, Chip],
   templateUrl: './nba.component.html',
   styleUrl: './nba.component.scss',
   providers: [ConfirmationService, MessageService]
@@ -54,67 +56,33 @@ export class NbaComponent {
   selectedRightTeam: any | undefined;
 
   allTeams: any = []
-  allTeams_BDL: any = []
   todaysGames: any = []
 
   matchups: any[] = [];
 
-  gridApi: any;
-  gridColumnApi: any;
-
-  public rowSelection: any;
-  public columnDefs = [
-    {headerName: 'Team', field: 'leftTeam', checkboxSelection: true },
-    {headerName: 'Score', field: 'leftScore' },
-    {headerName: 'Spread', field: 'spread'},
-    {headerName: 'Total Points', field: 'totalPoints'},
-    {headerName: 'Score', field: 'rightScore'},
-    {headerName: 'Team', field: 'rightTeam'},
-    {headerName: 'Confidence %', field: 'confidence'},
-    {headerName: 'Game Time', field: 'gameTime', valueFormatter: dateFormatter }
-  ];
-
-  public defaultColDef = {
-    sortable: true,
-    filter: true,
-    resizable: true,
-    wrapText: true,
-    cellStyle: {fontSize: '11px'}
-  };
-
-  constructor(public _dataService: DataService, private confirmationService: ConfirmationService, private messageService: MessageService) {
+  constructor(public _dataService: DataService) {
 
     this.neutral = true
 
     this.getNBAData()
   }
 
-  onGridReady(params: any) {
-    this.gridApi = params.api;
-    this.gridColumnApi = params.columnApi;
-  }
-  
-  onBtnExport() {
-    this.gridApi.exportDataAsCsv();
-  }
-
   getNBAData() {
     this._dataService.getNBAAnalytics().subscribe((response: any) => {
       this.allFirestoreTeams = response
+      
 
-      this.calculateNBAAverages()
-    })
+      this._dataService.getTodaysNBASchedule().subscribe((response2: any) => {
+        this.todaysGames = response2;
 
-    this._dataService.getNBATeams_BDL().subscribe((response: any) => {
-      this.allTeams_BDL = response.data;
+        this.calculateNBAAverages()
+        this.calculateTodaysGames()
+
+      })
     })
 
     this._dataService.getNBATeams().subscribe((response: any) => {
       this.allTeams = response.sort((a: any, b: any) => a.Name.localeCompare(b.Name))
-    })
-
-    this._dataService.getTodaysNBASchedule().subscribe((response: any) => {
-      this.todaysGames = response;
     })
   }
 
@@ -133,10 +101,19 @@ export class NbaComponent {
     let todaysMatchups = [];
     for (const key in this.todaysGames) {
       let ele = this.todaysGames[key];
-      leftTeam = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
-      rightTeam = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
-      leftTeam = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((leftTeam.City + ' ' + leftTeam.Name).toLowerCase()))[0]
-      rightTeam = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((rightTeam.City + ' ' + rightTeam.Name).toLowerCase()))[0]
+
+      let temp1 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
+      leftTeam = {
+        ...temp1,
+        ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((temp1.City + ' ' + temp1.Name).toLowerCase()))[0]
+      }
+
+      let temp2 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
+      rightTeam = {
+        ...temp2,
+        ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((temp2.City + ' ' + temp2.Name).toLowerCase()))[0]
+      }
+
       gameTime = new Date(ele.DateTime).toLocaleTimeString()
       todaysMatchups.push([leftTeam, rightTeam, gameTime])
     }
@@ -155,6 +132,7 @@ export class NbaComponent {
     this.rightWinner = false;
     this.spread = '';
     this.confidenceScore = '';
+    // console.log(this.matchups)
   }
 
   addMatchup(gameTime: any) {
@@ -194,21 +172,8 @@ export class NbaComponent {
         this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
       }
     }
-    for (const ele of this.allTeams_BDL) {
-      if(this.selectedLeftTeam.Key === ele.abbreviation) {
-        this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
-      }
-    }
 
-    this._dataService.getNBATeamStats(this.selectedLeftTeam.id).subscribe((response: any) => {
-      console.log(response.data)
-    })
-
-    // this._dataService.getNBATeamStats().subscribe((response: any) => {
-    //   this.allTeams_BDL = response;
-    // })
-
-    console.log(this.selectedLeftTeam)
+    // console.log(this.selectedLeftTeam)
   }
 
   setSelectedRightTeam() {
@@ -218,51 +183,10 @@ export class NbaComponent {
       }
     }
 
-    console.log(this.selectedRightTeam)
-  }
-
-  clearLeftSide() {
-    this.selectedLeftTeam = null;
-    this.leftScore = null;
-    this.leftTeamsList = null;
-    this.leftWinChance = null;
-    this.leftWinner = null;
-  }
-
-  clearRightSide() {
-    this.selectedRightTeam = null;
-    this.rightScore = null;
-    this.rightTeamsList = null;
-    this.rightWinChance = null;
-    this.rightWinner = null;
-  }
-
-  clearAllGames() {
-    this.matchups = []
-  }
-
-  confirmRemoveSingleGame(evt: any, idx: number) {
-    this.confirmationService.confirm({
-        target: evt.target as EventTarget,
-        message: 'Are you sure that you want to proceed?',
-        header: 'Confirmation',
-        icon: 'pi pi-exclamation-triangle',
-        acceptIcon:"none",
-        rejectIcon:"none",
-        rejectButtonStyleClass:"p-button-text",
-        accept: () => {
-            this.messageService.add({ severity: 'info', summary: 'Confirmed', detail: 'You have deleted a game' });
-            this.matchups.splice(idx, 1);
-        },
-        reject: () => {
-            // this.messageService.add({ severity: 'error', summary: 'Rejected', detail: 'You have rejected', life: 3000 });
-        }
-    });
+    // console.log(this.selectedRightTeam)
   }
 
   calculateOdds() {
-    this.selectedLeftTeam ? this.setSelectedLeftTeam() : this.clearLeftSide()
-    this.selectedRightTeam ? this.setSelectedRightTeam() : this.clearRightSide()
     if (this.selectedLeftTeam && this.selectedRightTeam) {
       let rightTeam: any, leftTeam: any
       let adv = .010;
@@ -343,33 +267,4 @@ export class NbaComponent {
       this.totalPoints = this.leftScore + this.rightScore;
     }
   }
-  
-  exportToExcel() {
-    if(this.matchups.length > 0) {
-      const columns = this.getColumns(this.matchups);
-      const worksheet = XLSX.utils.json_to_sheet(this.matchups, { header: columns });
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-      XLSX.writeFile(workbook, 'games.xlsx');
-    }
-  }
-  
-  getColumns(data: any[]): string[] {
-    const columns: any[] = [];
-    data.forEach(row => {
-      Object.keys(row).forEach(col => {
-        if (!columns.includes(col)) {
-          columns.push(col);
-        }
-      });
-    });
-    return columns;
-  }
-
-}
-
-function dateFormatter(params: any) {
-  if(params.data.gameTime === "User Generated") return "User Generated"
-  var dateAsString = params.data.gameTime;
-  return `${new Date(params.data.gameTime).toDateString()} ${new Date(params.data.gameTime).toLocaleTimeString()}`;
 }

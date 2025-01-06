@@ -1,6 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* You can add global styles to this file, and also import other style files */
-@import 'assets/theme.css';
-@import "primeng/resources/primeng.min.css";
 @import "primeicons/primeicons.css";
 
 /* Core Grid CSS */
@@ -9,8 +11,27 @@
 
 html,
 body {
+    height: 100%;
+    width: 100%;
+    background: #121212;
     font-size: 12px;
     margin: 0;
+}
+
+.bg-secondary {
+    background: #FFD54F !important;
+}
+
+.b-secondary {
+    border-color: #FFD54F !important;
+}
+
+.split-button-left button {
+    border-radius: 10px 0 0 10px;
+}
+
+.split-button-right button {
+    border-radius: 0 10px 10px 0;
 }
 
 .remove-game-button {

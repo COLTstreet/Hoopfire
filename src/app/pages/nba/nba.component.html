@@ -1,120 +1,43 @@
-<div class="">
-    <p-toast></p-toast>
-    <p-confirmDialog></p-confirmDialog>
-    <div class="grid m-0">
-        <div class="col-12">
-            <div class="flex justify-content-between">
-                <p-button icon="pi pi-calendar" [rounded]="true" [text]="true" pTooltip="Run Today's Games"
-                    (onClick)="calculateTodaysGames()"></p-button>
-                <p-button icon="pi pi-file-excel" [rounded]="true" [text]="true" pTooltip="Clear All Games"
-                    (onClick)="exportToExcel()"></p-button>
-                <p-button icon="pi pi-times-circle" [rounded]="true" [text]="true" pTooltip="Clear All Games"
-                    (onClick)="clearAllGames()"></p-button>
+<div class="flex flex-wrap -m-1 mt-4">
+    @for(matchup of matchups; track matchup; let i = $index) {
+    <p-card class="basis-full md:basis-1/3 md:block py-1 px-1">
+        <div class="text-center font-bold">{{matchup.gameTime}} ET</div>
+        <div class="flex flex-row">
+            <div class="basis-5/12 flex flex-col">
+                <div class="flex justify-center">
+                    <img loading="lazy" src="{{matchup.leftWikipediaLogoUrl}}" class="w-16 h-16" />
+                </div>
+                <div class="flex justify-center mt-2">
+                    {{matchup.leftTeam}}
+                </div>
+                <div class="flex justify-center mt-2 text-3xl">
+                    {{matchup.leftScore}}
+                </div>
             </div>
-        </div>
-        <div class="col-12 lg:col-6">
-            <div id="leftCard" class="surface-card p-4 shadow-2 border-round opacity-90 relative z-5">
-                <div class="grid">
-                    <div class="col-3">
-                        <span class="text-7xl">{{leftScore}}</span>
-                    </div>
-                    <div class="col-9">
-                        <p-dropdown [style]="{'minWidth':'100%'}" [options]="allFirestoreTeams"
-                            [(ngModel)]="selectedLeftTeam" optionLabel="name" [filter]="true" filterBy="name"
-                            [showClear]="true" placeholder="Select a Team" autoWidth="false"
-                            (onChange)="calculateOdds()">
-                            <ng-template pTemplate="selectedItem" let-selectedOption>
-                                <div class="flex align-items-center gap-2">
-                                    <div>{{ selectedOption.team }}</div>
-                                </div>
-                            </ng-template>
-                            <ng-template let-leftTeam pTemplate="item">
-                                <div class="flex align-items-center gap-2">
-                                    <div>{{ leftTeam.team }}</div>
-                                </div>
-                            </ng-template>
-                        </p-dropdown>
-                        <div *ngIf="selectedLeftTeam" class="text-center flex align-items-center justify-content-center m-4"
-                            style="height: 130px;"><img style="width: 125px;"
-                                src="{{selectedLeftTeam.WikipediaLogoUrl}}"></div>
-                    </div>
+            <div class="basis-1/6 flex flex-col">
+                <div class="flex flex-col h-full justify-center items-center">
+                    <p-chip>
+                        <span>Total:</span>
+                        <span>{{matchup.totalPoints}}</span>
+                    </p-chip>
+                    <p-chip class="mt-2">
+                        <span>Confidence:</span>
+                        <span>{{matchup.confidence}}</span>
+                    </p-chip>
+                </div>
+            </div>
+            <div class="basis-5/12 flex flex-col">
+                <div class="flex justify-center">
+                    <img loading="lazy" src="{{matchup.rightWikipediaLogoUrl}}" class="w-16 h-16" />
+                </div>
+                <div class="flex justify-center mt-2">
+                    {{matchup.rightTeam}}
+                </div>
+                <div class="flex justify-center mt-2 text-3xl">
+                    {{matchup.rightScore}}
                 </div>
             </div>
         </div>
-        <div class="col-12 lg:col-6">
-            <div id="rightCard" class="surface-card p-4 shadow-2 border-round opacity-90 relative z-4">
-                <div class="grid">
-                    <div class="col-3">
-                        <span class="text-7xl">{{rightScore}}</span>
-                    </div>
-                    <div class="col-9">
-                        <p-dropdown [style]="{'minWidth':'100%'}" [options]="allFirestoreTeams"
-                            [(ngModel)]="selectedRightTeam" optionLabel="name" [filter]="true" filterBy="name"
-                            [showClear]="true" placeholder="Select a Team" autoWidth="false"
-                            (onChange)="calculateOdds()">
-                            <ng-template pTemplate="selectedItem" let-selectedOption>
-                                <div class="flex align-items-center gap-2">
-                                    <div>{{ selectedOption.team }}</div>
-                                </div>
-                            </ng-template>
-                            <ng-template let-rightTeam pTemplate="item">
-                                <div class="flex align-items-center gap-2">
-                                    <div>{{ rightTeam.team }}</div>
-                                </div>
-                            </ng-template>
-                        </p-dropdown>
-                        <div *ngIf="selectedRightTeam"
-                            class="text-center flex align-items-center justify-content-center m-4" style="height: 130px;">
-                            <img style="width: 125px;" src="{{selectedRightTeam.WikipediaLogoUrl}}"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="grid m-0">
-        <div class="col-12">
-            <p-button label="Add To Table" (onClick)="addMatchup('User Generated')" class="full-width"></p-button>
-        </div>
-    </div>
-    <div class="grid m-0">
-        <div class="col-12 md:col-6 xl:col-4 p-3" *ngFor="let game of matchups; index as i">
-            <div class="surface-card shadow-2 border-round p-4 relative">
-                <p-button icon="pi pi-times" [rounded]="true" [text]="true" pTooltip="Remove Game"
-                    (onClick)="confirmRemoveSingleGame($event, i)" class="remove-game-button"></p-button>
-                <div class="flex justify-content-between">
-                    <div class="flex border-bottom-1 surface-border pb-4">
-                        <div class="flex flex-column">
-                            <span class="text-xl text-2xl font-medium mb-1">{{game.leftScore}}</span>
-                            <span class="text-600 font-medium mb-2">{{game.leftTeam}}</span>
-                            <span
-                                class="bg-blue-50 text-blue-400 border-round inline-flex py-1 px-2 text-sm">{{game.leftSpread}}</span>
-                        </div>
-                        <img src="{{game.leftWikipediaLogoUrl}}" style="width: 70px;height: 70px" class="ml-3" />
-                    </div>
-                    <div class="flex border-bottom-1 surface-border pb-4">
-                        <img src="{{game.rightWikipediaLogoUrl}}" style="width: 70px;height: 70px" class="mr-3" />
-                        <div class="flex flex-column">
-                            <span class="text-xl text-2xl font-medium mb-1">{{game.rightScore}}</span>
-                            <span class="text-600 font-medium mb-2">{{game.rightTeam}}</span>
-                            <span
-                                class="bg-blue-50 text-blue-400 border-round inline-flex py-1 px-2 text-sm">{{game.rightSpread}}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex justify-content-between pt-4">
-                    <div class="text-xl font-medium">Total Points: {{game.totalPoints}}</div>
-                    <div class="text-xl font-medium">Confidence: {{game.confidence}}</div>
-                </div>
-                <div class="flex justify-content-center pt-4">
-                    <div class="text-xl text-2xl font-medium mb-1">{{game.gameTime}}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- <div class="col-12">
-            <ag-grid-angular #agGrid style="width: 100%; height: 350px;" class="ag-theme-balham" [rowData]="matchups"
-                [columnDefs]="columnDefs" [defaultColDef]="defaultColDef" [rowSelection]="rowSelection"
-                (gridReady)="onGridReady($event)">
-            </ag-grid-angular>
-        </div> -->
+    </p-card>
+    }
 </div>

@@ -1,22 +1,30 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { DataService } from '../../services/data.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
+import { Button } from 'primeng/button';
+import { Tooltip } from 'primeng/tooltip';
+import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { Toast } from 'primeng/toast';
 import { Card } from 'primeng/card';
 import { Chip } from 'primeng/chip';
+import { Select } from 'primeng/select';
+
+import * as XLSX from 'xlsx';
 
 declare var stringSimilarity: any
 
 @Component({
-  selector: 'app-ncaa',
+  selector: 'app-custom-games',
   standalone: true,
-  imports: [FormsModule, CommonModule, Card, Chip],
-  templateUrl: './ncaa.component.html',
-  styleUrl: './ncaa.component.scss',
+  imports: [Select, FormsModule, CommonModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Toast, Card, Chip],
+  templateUrl: './custom-games.component.html',
+  styleUrl: './custom-games.component.scss',
   providers: [ConfirmationService, MessageService]
 })
-export class NCAAComponent implements OnInit {
+export class CustomGamesComponent {
 
   allFirestoreTeams: any = []
   leftTeamsList: any = []
@@ -39,6 +47,7 @@ export class NCAAComponent implements OnInit {
 
   spread: any | undefined
   winner: any | undefined
+  loser: any | undefined
   confidenceScore: any | undefined
   overUnder: any | undefined
   totalPoints: any | undefined
@@ -46,7 +55,6 @@ export class NCAAComponent implements OnInit {
   selectedLeftTeam: any | undefined;
   selectedRightTeam: any | undefined;
 
-  allTeamSeasonStats: any = []
   allTeams: any = []
   todaysGames: any = []
 
@@ -55,111 +63,85 @@ export class NCAAComponent implements OnInit {
   gridApi: any;
   gridColumnApi: any;
 
-  conferenceMap = new Map()
+  public rowSelection: any;
+  public columnDefs = [
+    {headerName: 'Team', field: 'leftTeam', checkboxSelection: true },
+    {headerName: 'Score', field: 'leftScore' },
+    {headerName: 'Spread', field: 'spread'},
+    {headerName: 'Total Points', field: 'totalPoints'},
+    {headerName: 'Score', field: 'rightScore'},
+    {headerName: 'Team', field: 'rightTeam'},
+    {headerName: 'Confidence %', field: 'confidence'},
+    {headerName: 'Game Time', field: 'gameTime', valueFormatter: dateFormatter }
+  ];
+
+  public defaultColDef = {
+    sortable: true,
+    filter: true,
+    resizable: true,
+    wrapText: true,
+    cellStyle: {fontSize: '11px'}
+  };
 
   constructor(public _dataService: DataService, private confirmationService: ConfirmationService, private messageService: MessageService) {
 
     this.neutral = true
-    
-    this.conferenceMap.set("American Athletic", "The American" )
-    this.conferenceMap.set("Atlantic Coast", "ACC" )
-    this.conferenceMap.set("Big Ten", "B10" )
-    this.conferenceMap.set("Big 12", "Big 12" )
-    this.conferenceMap.set("Conference USA", "CUSA" )
-    this.conferenceMap.set("Mid-American", "MAC" )
-    this.conferenceMap.set("Mountain West", "MWC" )
-    this.conferenceMap.set("Pac-12", "Pac-12" )
-    this.conferenceMap.set("Southeastern", "SEC" )
-    this.conferenceMap.set("Sun Belt", "SB" )
-    this.conferenceMap.set("America East",	"America East AmEast" )
-    this.conferenceMap.set("Atlantic Sun",	"ASUN" )
-    this.conferenceMap.set("Atlantic 10",	"A-10" )
-    this.conferenceMap.set("Big East",	"BE" )
-    this.conferenceMap.set("Big West", "BWC" )
-    this.conferenceMap.set("Coastal Athletic Association",	"CAA" )
-    this.conferenceMap.set("Horizon League",	"Horizon" )
-    this.conferenceMap.set("Metro Atlantic Athletic",	"MAAC" )
-    this.conferenceMap.set("Missouri Valley",	"MVC" )
-    this.conferenceMap.set("Mountain Pacific Sports Federation",	"MPSF" )
-    this.conferenceMap.set("Summit League",	"The Summit" )
-    this.conferenceMap.set("West Coast", "WCC" )
-    this.conferenceMap.set("Western Athletic", "WAC" )
-    this.conferenceMap.set("Southwestern Athletic", "SWAC" )
-    this.conferenceMap.set("Patriot League", "Pat" )
 
-    this.getNCAAData()
+    this.getNBAData()
   }
 
-  ngOnInit() {
+  onGridReady(params: any) {
+    this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
+  }
+  
+  onBtnExport() {
+    this.gridApi.exportDataAsCsv();
   }
 
-  getNCAAData() {
-    this._dataService.getNCAAMAnalytics().subscribe((response: any) => {
+  getNBAData() {
+    this._dataService.getNBAAnalytics().subscribe((response: any) => {
       this.allFirestoreTeams = response
+      
 
-      this._dataService.getAllNCAAMTeamSeasonStats().subscribe((response2: any) => {
-        this.allTeamSeasonStats = response2;
+      this.calculateNBAAverages()
+    })
 
-
-        this._dataService.getNCAAMTeams().subscribe((response3: any) => {
-          this.allTeams = response3.sort((a: any, b: any) => a.School.localeCompare(b.School))
-          
-          this._dataService.getTodaysNCAAMSchedule().subscribe((response4: any) => {
-            this.todaysGames = response4;
-
-            this.calculateAverages()
-            this.calculateTodaysGames()
-          })
-        })
-      })
+    this._dataService.getNBATeams().subscribe((response: any) => {
+      this.allTeams = response.sort((a: any, b: any) => a.Name.localeCompare(b.Name))
     })
   }
 
-  calculateAverages() {
-    let avgPosSum = 0;
-    let avgOffSum = 0;
-    for (const key in this.allFirestoreTeams) {
-      let ele = this.allFirestoreTeams[key];
-      if (ele.team != "Team") {
-        avgPosSum += Number(ele.adjT);
-        avgOffSum += Number(ele.adjO);
-      }
-    }
-
-    this.avgPos = avgPosSum / this.allFirestoreTeams.length;
-    this.avgOff = avgOffSum / this.allFirestoreTeams.length;
+  calculateNBAAverages() {
+    let ele = this.allFirestoreTeams.filter((d: any) => d.team === "League Average")[0];
+    this.avgPos = ele.pace;
+    this.avgOff = ele.oRtg;
   }
 
   calculateTodaysGames() {
-    // this.gridApi.setRowData([]);
-    let homeTeam: any;
-    let awayTeam: any;
+    // this.gridApi.setGridOption("rowData", []);
+    this.matchups = []
+    let leftTeam: any;
+    let rightTeam: any;
     let gameTime: any;
     let todaysMatchups = [];
     for (const key in this.todaysGames) {
       let ele = this.todaysGames[key];
 
-
       let temp1 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
-      if(temp1) {
-        homeTeam = {
-          ...temp1,
-          ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.split(" ")[0].toLowerCase()))[0]
-        }
+      leftTeam = {
+        ...temp1,
+        ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((temp1.City + ' ' + temp1.Name).toLowerCase()))[0]
       }
 
       let temp2 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
-      if(temp2) {
-        awayTeam = {
-          ...temp2,
-          ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp2.School.split(" ")[0].toLowerCase()))[0]
-        }
+      rightTeam = {
+        ...temp2,
+        ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((temp2.City + ' ' + temp2.Name).toLowerCase()))[0]
       }
 
-      if(homeTeam && awayTeam) {
-        gameTime = new Date(ele.DateTime).toLocaleTimeString();
-        todaysMatchups.push([homeTeam, awayTeam, gameTime])
-      }
+      gameTime = new Date(ele.DateTime).toLocaleTimeString()
+      todaysMatchups.push([leftTeam, rightTeam, gameTime])
     }
 
     if (todaysMatchups.length > 0) {
@@ -176,6 +158,7 @@ export class NCAAComponent implements OnInit {
     this.rightWinner = false;
     this.spread = '';
     this.confidenceScore = '';
+    console.log(this.matchups)
   }
 
   addMatchup(gameTime: any) {
@@ -191,8 +174,8 @@ export class NCAAComponent implements OnInit {
       "confidence": this.confidenceScore + "%",
       "gameTime": "User Generated",
       "remove": "",
-      "leftTeamLogoUrl": this.selectedLeftTeam.TeamLogoUrl,
-      "rightTeamLogoUrl": this.selectedRightTeam.TeamLogoUrl
+      "leftWikipediaLogoUrl": this.selectedLeftTeam.WikipediaLogoUrl,
+      "rightWikipediaLogoUrl": this.selectedRightTeam.WikipediaLogoUrl
     };
     if(matchup.leftScore > matchup.rightScore) {
       matchup.leftSpread = this.spread,
@@ -211,37 +194,66 @@ export class NCAAComponent implements OnInit {
 
   setSelectedLeftTeam() {
     for (const ele of this.allTeams) {
-      if(this.selectedLeftTeam.team && stringSimilarity.compareTwoStrings(ele.School, this.selectedLeftTeam.team) > .8) {
-        if(this.conferenceMap.get(ele.Conference) === this.selectedLeftTeam.conference) {
-          this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
-        }
+      if(stringSimilarity.compareTwoStrings((ele.City + " " + ele.Name), this.selectedLeftTeam.team) > .8) {
+        this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
       }
     }
-    for (const ele of this.allTeamSeasonStats) {
-      if(ele.GlobalTeamID === this.selectedLeftTeam.GlobalTeamID) {
-          this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
-      }
-    }
+
+    console.log(this.selectedLeftTeam)
   }
 
   setSelectedRightTeam() {
     for (const ele of this.allTeams) {
-      if(this.selectedRightTeam.team && stringSimilarity.compareTwoStrings(ele.School, this.selectedRightTeam.team) > .8) {
-        if(this.conferenceMap.get(ele.Conference) === this.selectedRightTeam.conference) {
-          this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
+      if(stringSimilarity.compareTwoStrings((ele.City + " " + ele.Name), this.selectedRightTeam.team) > .8) {
+        this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
+      }
+    }
+
+    console.log(this.selectedRightTeam)
+  }
+
+  clearLeftSide() {
+    this.selectedLeftTeam = null;
+    this.leftScore = null;
+    this.leftTeamsList = null;
+    this.leftWinChance = null;
+    this.leftWinner = null;
+  }
+
+  clearRightSide() {
+    this.selectedRightTeam = null;
+    this.rightScore = null;
+    this.rightTeamsList = null;
+    this.rightWinChance = null;
+    this.rightWinner = null;
+  }
+
+  clearAllGames() {
+    this.matchups = []
+  }
+
+  confirmRemoveSingleGame(evt: any, idx: number) {
+    this.confirmationService.confirm({
+        target: evt.target as EventTarget,
+        message: 'Are you sure that you want to proceed?',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        acceptIcon:"none",
+        rejectIcon:"none",
+        rejectButtonStyleClass:"p-button-text",
+        accept: () => {
+            this.messageService.add({ severity: 'info', summary: 'Confirmed', detail: 'You have deleted a game' });
+            this.matchups.splice(idx, 1);
+        },
+        reject: () => {
+            // this.messageService.add({ severity: 'error', summary: 'Rejected', detail: 'You have rejected', life: 3000 });
         }
-      }
-    }
-    for (const ele of this.allTeamSeasonStats) {
-      if(ele.GlobalTeamID === this.selectedRightTeam.GlobalTeamID) {
-          this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
-      }
-    }
+    });
   }
 
   calculateOdds() {
-    if(this.selectedLeftTeam) this.setSelectedLeftTeam()
-    if(this.selectedRightTeam) this.setSelectedRightTeam()
+    this.selectedLeftTeam ? this.setSelectedLeftTeam() : this.clearLeftSide()
+    this.selectedRightTeam ? this.setSelectedRightTeam() : this.clearRightSide()
     if (this.selectedLeftTeam && this.selectedRightTeam) {
       let rightTeam: any, leftTeam: any
       let adv = .010;
@@ -253,11 +265,11 @@ export class NCAAComponent implements OnInit {
         rightTeam = this.selectedLeftTeam;
       }
 
-      let adjHomeOff = Number(leftTeam.adjO)
-      let adjHomeDef = Number(leftTeam.adjD)
+      var adjHomeOff = Number(leftTeam.oRtg) + Number(leftTeam.oRtg) * adv;
+      var adjHomeDef = Number(leftTeam.dRtg) - Number(leftTeam.dRtg) * adv;
 
-      let adjAwayOff = Number(rightTeam.adjO)
-      let adjAwayDef = Number(rightTeam.adjD)
+      var adjAwayOff = Number(rightTeam.oRtg) + Number(rightTeam.oRtg) * adv;
+      var adjAwayDef = Number(rightTeam.dRtg) - Number(rightTeam.dRtg) * adv;
 
       let pythExp = 10.25;
       let adjHomePyth = Math.pow(adjHomeOff, pythExp) / (Math.pow(adjHomeOff, pythExp) + Math.pow(adjHomeDef, pythExp));
@@ -269,7 +281,7 @@ export class NCAAComponent implements OnInit {
       this.leftWinChance = this.leftWinChance.toFixed(0);
       this.rightWinChance = this.rightWinChance.toFixed(0);
 
-      let adjPos = ((rightTeam.adjT / this.avgPos) * (leftTeam.adjT / this.avgPos)) * this.avgPos;
+      var adjPos = ((rightTeam.pace / this.avgPos) * (leftTeam.pace / this.avgPos)) * this.avgPos;
 
       let rightScoreDecimal = (((adjAwayOff / this.avgOff) * (adjHomeDef / this.avgOff)) * (this.avgOff) * (adjPos / 100));
       this.rightScore = Number(rightScoreDecimal.toFixed(0));
@@ -286,10 +298,12 @@ export class NCAAComponent implements OnInit {
       if (leftScoreDecimal > rightScoreDecimal) {
         this.spread = "-" + (Math.round(decSpread * 2) / 2).toFixed(1);
         this.winner = leftTeam;
+        this.loser = rightTeam;
         this.confidenceScore = this.leftWinChance;
       } else {
         this.spread = "-" + (Math.round(decSpread * 2) / 2).toFixed(1);
         this.winner = rightTeam;
+        this.loser = leftTeam;
         this.confidenceScore = this.rightWinChance;
       }
 
@@ -320,4 +334,33 @@ export class NCAAComponent implements OnInit {
       this.totalPoints = this.leftScore + this.rightScore;
     }
   }
+  
+  exportToExcel() {
+    if(this.matchups.length > 0) {
+      const columns = this.getColumns(this.matchups);
+      const worksheet = XLSX.utils.json_to_sheet(this.matchups, { header: columns });
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      XLSX.writeFile(workbook, 'games.xlsx');
+    }
+  }
+  
+  getColumns(data: any[]): string[] {
+    const columns: any[] = [];
+    data.forEach(row => {
+      Object.keys(row).forEach(col => {
+        if (!columns.includes(col)) {
+          columns.push(col);
+        }
+      });
+    });
+    return columns;
+  }
+
+}
+
+function dateFormatter(params: any) {
+  if(params.data.gameTime === "User Generated") return "User Generated"
+  var dateAsString = params.data.gameTime;
+  return `${new Date(params.data.gameTime).toDateString()} ${new Date(params.data.gameTime).toLocaleTimeString()}`;
 }

@@ -11,6 +11,26 @@ import { environment } from '../environments/environment';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { providePrimeNG } from 'primeng/config';
+import { definePreset, palette } from '@primeng/themes';
+import Aura from '@primeng/themes/aura';
+
+//The default Coke Theme
+const themePalette = palette('#F06644');
+const presetTheme = definePreset(Aura, {
+  semantic: {
+    primary: themePalette,
+    options: {
+      darkModeSelector: '.my-app-dark',
+    },
+    focusRing: {
+      width: '1px',
+      style: 'dashed',
+      color: '{primary.color}',
+      offset: '1px',
+    },
+  },
+});
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -18,13 +38,16 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideClientHydration(),
     provideHttpClient(withFetch()),
-    importProvidersFrom([
-        provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
-        provideFirestore(() => getFirestore()),
-        provideAnalytics(() => getAnalytics()),
-        provideDatabase(() => getDatabase()),
-        ScreenTrackingService,
-    ]),
+    providePrimeNG({ 
+        theme: {
+            preset: presetTheme
+        }
+    }),
+    provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
+    provideFirestore(() => getFirestore()),
+    provideAnalytics(() => getAnalytics()),
+    provideDatabase(() => getDatabase()),
+    ScreenTrackingService,
     provideServiceWorker('ngsw-worker.js', {
         enabled: !isDevMode(),
         registrationStrategy: 'registerWhenStable:30000'

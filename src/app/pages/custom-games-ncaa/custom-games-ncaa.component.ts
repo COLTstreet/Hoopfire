@@ -1,22 +1,29 @@
 import { Component, OnInit } from '@angular/core';
 import { DataService } from '../../services/data.service';
+import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { Card } from 'primeng/card';
-import { Chip } from 'primeng/chip';
+import { ToastModule } from 'primeng/toast';
+import { Select } from 'primeng/select';
+
+import * as XLSX from 'xlsx';
 
 declare var stringSimilarity: any
 
 @Component({
-  selector: 'app-ncaa',
+  selector: 'app-custom-games-ncaa',
   standalone: true,
-  imports: [FormsModule, CommonModule, Card, Chip],
-  templateUrl: './ncaa.component.html',
-  styleUrl: './ncaa.component.scss',
+  imports: [DropdownModule, FormsModule, CommonModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule, Select],
+  templateUrl: './custom-games-ncaa.component.html',
+  styleUrl: './custom-games-ncaa.component.scss',
   providers: [ConfirmationService, MessageService]
 })
-export class NCAAComponent implements OnInit {
+export class CustomGamesNcaaComponent {
 
   allFirestoreTeams: any = []
   leftTeamsList: any = []
@@ -57,6 +64,26 @@ export class NCAAComponent implements OnInit {
 
   conferenceMap = new Map()
 
+  public rowSelection: any;
+  public columnDefs = [
+    {headerName: 'Team', field: 'leftTeam', checkboxSelection: true },
+    {headerName: 'Score', field: 'leftScore' },
+    {headerName: 'Spread', field: 'spread'},
+    {headerName: 'Total Points', field: 'totalPoints'},
+    {headerName: 'Score', field: 'rightScore'},
+    {headerName: 'Team', field: 'rightTeam'},
+    {headerName: 'Confidence %', field: 'confidence'},
+    {headerName: 'Game Time', field: 'gameTime', valueFormatter: dateFormatter }
+  ];
+
+  public defaultColDef = {
+    sortable: true,
+    filter: true,
+    resizable: true,
+    wrapText: true,
+    cellStyle: {fontSize: '11px'}
+  };
+
   constructor(public _dataService: DataService, private confirmationService: ConfirmationService, private messageService: MessageService) {
 
     this.neutral = true
@@ -93,25 +120,28 @@ export class NCAAComponent implements OnInit {
   ngOnInit() {
   }
 
+  onGridReady(params: any) {
+    this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
+  }
+  
+  onBtnExport() {
+    this.gridApi.exportDataAsCsv();
+  }
+
   getNCAAData() {
     this._dataService.getNCAAMAnalytics().subscribe((response: any) => {
       this.allFirestoreTeams = response
 
-      this._dataService.getAllNCAAMTeamSeasonStats().subscribe((response2: any) => {
-        this.allTeamSeasonStats = response2;
+      this.calculateAverages()
+    })
 
+    this._dataService.getAllNCAAMTeamSeasonStats().subscribe((response: any) => {
+      this.allTeamSeasonStats = response;
+    })
 
-        this._dataService.getNCAAMTeams().subscribe((response3: any) => {
-          this.allTeams = response3.sort((a: any, b: any) => a.School.localeCompare(b.School))
-          
-          this._dataService.getTodaysNCAAMSchedule().subscribe((response4: any) => {
-            this.todaysGames = response4;
-
-            this.calculateAverages()
-            this.calculateTodaysGames()
-          })
-        })
-      })
+    this._dataService.getNCAAMTeams().subscribe((response: any) => {
+      this.allTeams = response.sort((a: any, b: any) => a.School.localeCompare(b.School))
     })
   }
 
@@ -138,24 +168,10 @@ export class NCAAComponent implements OnInit {
     let todaysMatchups = [];
     for (const key in this.todaysGames) {
       let ele = this.todaysGames[key];
-
-
-      let temp1 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
-      if(temp1) {
-        homeTeam = {
-          ...temp1,
-          ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.split(" ")[0].toLowerCase()))[0]
-        }
-      }
-
-      let temp2 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
-      if(temp2) {
-        awayTeam = {
-          ...temp2,
-          ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp2.School.split(" ")[0].toLowerCase()))[0]
-        }
-      }
-
+      homeTeam = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
+      awayTeam = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
+      if(homeTeam) homeTeam = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(homeTeam.School.split(" ")[0].toLowerCase()))[0]
+      if(awayTeam) awayTeam = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(awayTeam.School.split(" ")[0].toLowerCase()))[0]
       if(homeTeam && awayTeam) {
         gameTime = new Date(ele.DateTime).toLocaleTimeString();
         todaysMatchups.push([homeTeam, awayTeam, gameTime])
@@ -211,7 +227,7 @@ export class NCAAComponent implements OnInit {
 
   setSelectedLeftTeam() {
     for (const ele of this.allTeams) {
-      if(this.selectedLeftTeam.team && stringSimilarity.compareTwoStrings(ele.School, this.selectedLeftTeam.team) > .8) {
+      if(stringSimilarity.compareTwoStrings(ele.School, this.selectedLeftTeam.team) > .8) {
         if(this.conferenceMap.get(ele.Conference) === this.selectedLeftTeam.conference) {
           this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
         }
@@ -226,7 +242,7 @@ export class NCAAComponent implements OnInit {
 
   setSelectedRightTeam() {
     for (const ele of this.allTeams) {
-      if(this.selectedRightTeam.team && stringSimilarity.compareTwoStrings(ele.School, this.selectedRightTeam.team) > .8) {
+      if(stringSimilarity.compareTwoStrings(ele.School, this.selectedRightTeam.team) > .8) {
         if(this.conferenceMap.get(ele.Conference) === this.selectedRightTeam.conference) {
           this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
         }
@@ -237,6 +253,45 @@ export class NCAAComponent implements OnInit {
           this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
       }
     }
+  }
+
+  clearLeftSide() {
+    this.selectedLeftTeam = null;
+    this.leftScore = null;
+    this.leftTeamsList = null;
+    this.leftWinChance = null;
+    this.leftWinner = null;
+  }
+
+  clearRightSide() {
+    this.selectedRightTeam = null;
+    this.rightScore = null;
+    this.rightTeamsList = null;
+    this.rightWinChance = null;
+    this.rightWinner = null;
+  }
+
+  clearAllGames() {
+    this.matchups = []
+  }
+
+  confirmRemoveSingleGame(evt: any, idx: number) {
+    this.confirmationService.confirm({
+        target: evt.target as EventTarget,
+        message: 'Are you sure that you want to proceed?',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        acceptIcon:"none",
+        rejectIcon:"none",
+        rejectButtonStyleClass:"p-button-text",
+        accept: () => {
+            this.messageService.add({ severity: 'info', summary: 'Confirmed', detail: 'You have deleted a game' });
+            this.matchups.splice(idx, 1);
+        },
+        reject: () => {
+            // this.messageService.add({ severity: 'error', summary: 'Rejected', detail: 'You have rejected', life: 3000 });
+        }
+    });
   }
 
   calculateOdds() {
@@ -320,4 +375,32 @@ export class NCAAComponent implements OnInit {
       this.totalPoints = this.leftScore + this.rightScore;
     }
   }
+  
+  exportToExcel() {
+    if(this.matchups.length > 0) {
+      const columns = this.getColumns(this.matchups);
+      const worksheet = XLSX.utils.json_to_sheet(this.matchups, { header: columns });
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      XLSX.writeFile(workbook, 'games.xlsx');
+    }
+  }
+  
+  getColumns(data: any[]): string[] {
+    const columns: any[] = [];
+    data.forEach(row => {
+      Object.keys(row).forEach(col => {
+        if (!columns.includes(col)) {
+          columns.push(col);
+        }
+      });
+    });
+    return columns;
+  }
+}
+
+function dateFormatter(params: any) {
+  if(params.data.gameTime === "User Generated") return "User Generated"
+  var dateAsString = params.data.gameTime;
+  return `${new Date(params.data.gameTime).toDateString()} ${new Date(params.data.gameTime).toLocaleTimeString()}`;
 }

@@ -38,14 +38,6 @@ export class DataService {
     return this.getWithKey("https://api.sportsdata.io/v3/nba/projections/json/InjuredPlayers", "ec152bc50abf4e5b9ca29809636371aa");
   }
 
-  getNBATeamStats(id: any) {
-    return this.getwithAuth("https://api.balldontlie.io/v1/teams/" + id, "fa6ccc70-24c3-44f0-8196-04c37c6b981b");
-  }
-
-  getNBATeams_BDL() {
-    return this.getwithAuth("https://api.balldontlie.io/v1/teams", "fa6ccc70-24c3-44f0-8196-04c37c6b981b");
-  }
-
   getNCAAMAnalytics(): Observable<any> {
     const itemCollection = collection(this.firestore, 'college-teams')
     return collectionData(itemCollection);

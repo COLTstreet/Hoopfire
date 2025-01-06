@@ -1,15 +1,17 @@
 <img src="assets/hoopfire-logo-2024.png" class="logo-img">
-<div>
-    <div class="grid m-0">
-        <div class="col">
-            <div class="text-center p-3 border-round bg-primary">
-                <p-button label="NCAA" class="block w-full" [routerLink]="['ncaa']"></p-button>
-            </div>
+<div class="px-2 py-6 md:px-6">
+    <div class="flex flex-row gap-1">
+        <div class="basis-1/2">
+            <p-button icon="pi pi-pencil" class="h-full split-button-left"
+                styleClass="h-full bg-secondary b-secondary" severity="secondary" routerLink="/custom-games-ncaa" />
+            <p-button label="NCAA" class="w-10/12 h-full split-button-right" styleClass="w-10/12 h-full"
+                routerLink="/ncaa" />
         </div>
-        <div class="col">
-            <div class="text-center p-3 border-round bg-primary">
-                <p-button label="NBA" class="block w-full" [routerLink]="['nba']"></p-button>
-            </div>
+        <div class="basis-1/2">
+            <p-button icon="pi pi-pencil" class="h-full split-button-left"
+                styleClass="w-2/12 h-full bg-secondary b-secondary" severity="secondary" routerLink="/custom-games" />
+            <p-button label="NBA" class="w-10/12 h-full split-button-right" styleClass="w-10/12 h-full"
+                routerLink="/nba" />
         </div>
     </div>
     <router-outlet></router-outlet>

@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { NCAAComponent } from './pages/ncaa/ncaa.component';
 import { NbaComponent } from './pages/nba/nba.component';
+import { CustomGamesComponent } from './pages/custom-games/custom-games.component';
+import { CustomGamesNcaaComponent } from './pages/custom-games-ncaa/custom-games-ncaa.component';
 
 export const routes: Routes = [
     {
@@ -16,6 +18,16 @@ export const routes: Routes = [
     {
       path: 'nba',
       component: NbaComponent,
+      pathMatch: 'full'
+    },
+    {
+      path: 'custom-games',
+      component: CustomGamesComponent,
+      pathMatch: 'full'
+    },
+    {
+      path: 'custom-games-ncaa',
+      component: CustomGamesNcaaComponent,
       pathMatch: 'full'
     },
 ];
