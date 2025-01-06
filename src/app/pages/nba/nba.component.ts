@@ -13,6 +13,7 @@ import { Chip } from 'primeng/chip';
 
 import * as XLSX from 'xlsx';
 import { Select } from 'primeng/select';
+import { combineLatest } from 'rxjs';
 
 declare var stringSimilarity: any
 
@@ -68,22 +69,20 @@ export class NbaComponent {
   }
 
   getNBAData() {
-    this._dataService.getNBAAnalytics().subscribe((response: any) => {
-      this.allFirestoreTeams = response
-      
+    combineLatest([
+      this._dataService.getNBAAnalytics(),
+      this._dataService.getNBATeams(),
+      this._dataService.getTodaysNBASchedule(),
+    ]).subscribe(([firestoreData, nbaData, scheduleData]: any) => {
+      this.allFirestoreTeams = firestoreData;
+      this.allTeams = nbaData.sort((a: any, b: any) =>
+        a.Name.localeCompare(b.Name)
+      );
+      this.todaysGames = scheduleData;
 
-      this._dataService.getTodaysNBASchedule().subscribe((response2: any) => {
-        this.todaysGames = response2;
-
-        this.calculateNBAAverages()
-        this.calculateTodaysGames()
-
-      })
-    })
-
-    this._dataService.getNBATeams().subscribe((response: any) => {
-      this.allTeams = response.sort((a: any, b: any) => a.Name.localeCompare(b.Name))
-    })
+      this.calculateNBAAverages();
+      this.calculateTodaysGames();
+    });
   }
 
   calculateNBAAverages() {

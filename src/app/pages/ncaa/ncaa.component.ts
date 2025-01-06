@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Card } from 'primeng/card';
 import { Chip } from 'primeng/chip';
+import { combineLatest } from 'rxjs';
 
 declare var stringSimilarity: any
 
@@ -94,25 +95,22 @@ export class NCAAComponent implements OnInit {
   }
 
   getNCAAData() {
-    this._dataService.getNCAAMAnalytics().subscribe((response: any) => {
-      this.allFirestoreTeams = response
 
-      this._dataService.getAllNCAAMTeamSeasonStats().subscribe((response2: any) => {
-        this.allTeamSeasonStats = response2;
+    combineLatest([
+      this._dataService.getNCAAMAnalytics(),
+      this._dataService.getAllNCAAMTeamSeasonStats(),
+      this._dataService.getNCAAMTeams(),
+      this._dataService.getTodaysNCAAMSchedule(),
+    ]).subscribe(([firestoreData, ncaaTeamStatsData, ncaaTeamsData, scheduleData]: any) => {
+      this.allFirestoreTeams = firestoreData
+      this.allTeamSeasonStats = ncaaTeamStatsData;
+      this.allTeams = ncaaTeamsData.sort((a: any, b: any) => a.School.localeCompare(b.School))
+      this.todaysGames = scheduleData;
 
+      this.calculateAverages()
+      this.calculateTodaysGames()
 
-        this._dataService.getNCAAMTeams().subscribe((response3: any) => {
-          this.allTeams = response3.sort((a: any, b: any) => a.School.localeCompare(b.School))
-          
-          this._dataService.getTodaysNCAAMSchedule().subscribe((response4: any) => {
-            this.todaysGames = response4;
-
-            this.calculateAverages()
-            this.calculateTodaysGames()
-          })
-        })
-      })
-    })
+    });
   }
 
   calculateAverages() {
