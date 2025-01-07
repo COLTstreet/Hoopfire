@@ -20,9 +20,6 @@ const themePalette = palette('#F06644');
 const presetTheme = definePreset(Aura, {
   semantic: {
     primary: themePalette,
-    options: {
-      darkModeSelector: '.my-app-dark',
-    },
     focusRing: {
       width: '1px',
       style: 'dashed',

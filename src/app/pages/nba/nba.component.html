@@ -1,6 +1,6 @@
 <div class="flex flex-wrap -m-1 mt-4">
     @for(matchup of matchups; track matchup; let i = $index) {
-    <p-card class="basis-full md:basis-1/3 md:block py-1 px-1">
+    <p-card class="basis-full md:basis-1/3 md:block py-1 px-1" [style]="{'background': 'white'}">
         <div class="text-center font-bold">{{matchup.gameTime}} ET</div>
         <div class="flex flex-row">
             <div class="basis-5/12 flex flex-col">
