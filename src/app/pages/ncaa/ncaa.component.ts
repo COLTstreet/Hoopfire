@@ -62,7 +62,7 @@ export class NCAAComponent implements OnInit {
 
     this.neutral = true
     
-    this.conferenceMap.set("American Athletic", "The American" )
+    this.conferenceMap.set("American Athletic", "Amer" )
     this.conferenceMap.set("Atlantic Coast", "ACC" )
     this.conferenceMap.set("Big Ten", "B10" )
     this.conferenceMap.set("Big 12", "Big 12" )
@@ -87,6 +87,8 @@ export class NCAAComponent implements OnInit {
     this.conferenceMap.set("Western Athletic", "WAC" )
     this.conferenceMap.set("Southwestern Athletic", "SWAC" )
     this.conferenceMap.set("Patriot League", "Pat" )
+    this.conferenceMap.set("Southland", "Slnd" )
+    this.conferenceMap.set("Mid-Eastern", "MEAC" )
 
     this.getNCAAData()
   }
@@ -137,20 +139,49 @@ export class NCAAComponent implements OnInit {
     for (const key in this.todaysGames) {
       let ele = this.todaysGames[key];
 
-
-      let temp1 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
+      // let temp1 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
+      let temp1 = this.allTeams.filter((team: any) => team.GlobalTeamID === ele.GlobalHomeTeamID)[0]
       if(temp1) {
-        homeTeam = {
-          ...temp1,
-          ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.split(" ")[0].toLowerCase()))[0]
+        let temp2;
+        temp2 = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.toLowerCase()))[0]
+        if(temp2) {
+          homeTeam = {
+            ...temp1,
+            ...temp2
+          }
+        } else {
+          this.allFirestoreTeams.filter((tm: any) => {
+            if(stringSimilarity.compareTwoStrings(temp1.School, tm.team) > .70 && this.conferenceMap.get(temp1.Conference) === tm.conference) {
+              temp2 = tm
+            }
+          })
+          homeTeam = {
+            ...temp1,
+            ...temp2
+          }
         }
       }
 
-      let temp2 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
-      if(temp2) {
-        awayTeam = {
-          ...temp2,
-          ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp2.School.split(" ")[0].toLowerCase()))[0]
+      // let temp3 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
+      let temp3 = this.allTeams.filter((team: any) => team.GlobalTeamID === ele.GlobalAwayTeamID)[0]
+      if(temp3) {
+        let temp4;
+        temp4 = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp3.School.toLowerCase()))[0]
+        if(temp4) {
+          awayTeam = {
+            ...temp3,
+            ...temp4
+          }
+        } else {
+          this.allFirestoreTeams.filter((tm: any) => {
+            if(stringSimilarity.compareTwoStrings(temp3.School, tm.team) > .70 && this.conferenceMap.get(temp1.Conference) === tm.conference) {
+              temp4 = tm
+            }
+          })
+          awayTeam = {
+            ...temp3,
+            ...temp4
+          }
         }
       }
 
