@@ -89,6 +89,7 @@ export class NCAAComponent implements OnInit {
     this.conferenceMap.set("Patriot League", "Pat" )
     this.conferenceMap.set("Southland", "Slnd" )
     this.conferenceMap.set("Mid-Eastern", "MEAC" )
+    this.conferenceMap.set("Northeast", "NEC" )
 
     this.getNCAAData()
   }
@@ -150,8 +151,10 @@ export class NCAAComponent implements OnInit {
             ...temp2
           }
         } else {
+          let schoolName = temp1.School.replace("College", '').trim()
+          schoolName = schoolName.replace("University", '').trim()
           this.allFirestoreTeams.filter((tm: any) => {
-            if(stringSimilarity.compareTwoStrings(temp1.School, tm.team) > .70 && this.conferenceMap.get(temp1.Conference) === tm.conference) {
+            if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference) === tm.conference) {
               temp2 = tm
             }
           })
@@ -173,8 +176,10 @@ export class NCAAComponent implements OnInit {
             ...temp4
           }
         } else {
+          let schoolName = temp3.School.replace("College", '').trim()
+          schoolName = schoolName.replace("University", '').trim()
           this.allFirestoreTeams.filter((tm: any) => {
-            if(stringSimilarity.compareTwoStrings(temp3.School, tm.team) > .70 && this.conferenceMap.get(temp1.Conference) === tm.conference) {
+            if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference) === tm.conference) {
               temp4 = tm
             }
           })
