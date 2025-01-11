@@ -65,31 +65,35 @@ export class NCAAComponent implements OnInit {
     this.conferenceMap.set("American Athletic", "Amer" )
     this.conferenceMap.set("Atlantic Coast", "ACC" )
     this.conferenceMap.set("Big Ten", "B10" )
-    this.conferenceMap.set("Big 12", "Big 12" )
+    this.conferenceMap.set("Big 12", "B12" )
     this.conferenceMap.set("Conference USA", "CUSA" )
     this.conferenceMap.set("Mid-American", "MAC" )
     this.conferenceMap.set("Mountain West", "MWC" )
-    this.conferenceMap.set("Pac-12", "Pac-12" )
+    this.conferenceMap.set("Pac-12", "WCC" )
     this.conferenceMap.set("Southeastern", "SEC" )
     this.conferenceMap.set("Sun Belt", "SB" )
-    this.conferenceMap.set("America East",	"America East AmEast" )
+    this.conferenceMap.set("America East",	"AE" )
     this.conferenceMap.set("Atlantic Sun",	"ASUN" )
     this.conferenceMap.set("Atlantic 10",	"A-10" )
     this.conferenceMap.set("Big East",	"BE" )
-    this.conferenceMap.set("Big West", "BWC" )
+    this.conferenceMap.set("Big West", "BW" )
     this.conferenceMap.set("Coastal Athletic Association",	"CAA" )
-    this.conferenceMap.set("Horizon League",	"Horizon" )
+    this.conferenceMap.set("Horizon League",	"Horz" )
     this.conferenceMap.set("Metro Atlantic Athletic",	"MAAC" )
     this.conferenceMap.set("Missouri Valley",	"MVC" )
     this.conferenceMap.set("Mountain Pacific Sports Federation",	"MPSF" )
-    this.conferenceMap.set("Summit League",	"The Summit" )
+    this.conferenceMap.set("Summit",	"Sum" )
     this.conferenceMap.set("West Coast", "WCC" )
     this.conferenceMap.set("Western Athletic", "WAC" )
     this.conferenceMap.set("Southwestern Athletic", "SWAC" )
-    this.conferenceMap.set("Patriot League", "Pat" )
+    this.conferenceMap.set("Patriot League", "PL" )
     this.conferenceMap.set("Southland", "Slnd" )
     this.conferenceMap.set("Mid-Eastern", "MEAC" )
     this.conferenceMap.set("Northeast", "NEC" )
+    this.conferenceMap.set("Ohio Valley", "OVC" )
+    this.conferenceMap.set("Southern", "SC" )
+    this.conferenceMap.set("Big Sky", "BSky" )
+    this.conferenceMap.set("Big South", "BSth" )
 
     this.getNCAAData()
   }
@@ -140,6 +144,11 @@ export class NCAAComponent implements OnInit {
     for (const key in this.todaysGames) {
       let ele = this.todaysGames[key];
 
+      console.log(key)
+      if(key === "86") {
+        console.log(key)
+      }
+
       // let temp1 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
       let temp1 = this.allTeams.filter((team: any) => team.GlobalTeamID === ele.GlobalHomeTeamID)[0]
       if(temp1) {
@@ -153,9 +162,20 @@ export class NCAAComponent implements OnInit {
         } else {
           let schoolName = temp1.School.replace("College", '').trim()
           schoolName = schoolName.replace("University", '').trim()
+          let schoolRecord = `${temp1.Wins}-${temp1.Losses}`
           this.allFirestoreTeams.filter((tm: any) => {
-            if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference) === tm.conference) {
+            if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase()) {
               temp2 = tm
+            } else if (
+              stringSimilarity.compareTwoStrings(schoolName, tm.team) > 0.35 &&
+              this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase() &&
+              schoolRecord === tm.winLoss
+            ) {
+              temp2 = tm;
+            } else if(schoolName === "UIC") {
+              temp2 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Illinois Chicago"))[0]
+            } else if(schoolName === "UAPB") {
+              temp2 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Arkansas Pine Bluff"))[0]
             }
           })
           homeTeam = {
@@ -178,9 +198,20 @@ export class NCAAComponent implements OnInit {
         } else {
           let schoolName = temp3.School.replace("College", '').trim()
           schoolName = schoolName.replace("University", '').trim()
+          let schoolRecord = `${temp3.Wins}-${temp3.Losses}`
           this.allFirestoreTeams.filter((tm: any) => {
-            if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference) === tm.conference) {
+            if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase()) {
               temp4 = tm
+            } else if (
+              stringSimilarity.compareTwoStrings(schoolName, tm.team) > 0.35 &&
+              this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase() &&
+              schoolRecord === tm.winLoss
+            ) {
+              temp4 = tm;
+            } else if(schoolName === "UIC") {
+              temp4 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Illinois Chicago"))[0]
+            } else if(schoolName === "UAPB") {
+              temp4 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Arkansas Pine Bluff"))[0]
             }
           })
           awayTeam = {
@@ -188,6 +219,10 @@ export class NCAAComponent implements OnInit {
             ...temp4
           }
         }
+      }
+
+      if(homeTeam.School === "Stanford" || awayTeam.School === "Stanford") {
+        console.log("here")
       }
 
       if(homeTeam && awayTeam) {
