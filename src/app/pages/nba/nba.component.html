@@ -4,13 +4,16 @@
         <div class="text-center font-bold text-black">{{matchup.gameTime}} ET</div>
         <div class="flex flex-row">
             <div class="basis-5/12 flex flex-col text-black">
-                <div class="flex justify-center">
+                <div class="flex justify-center items-center">
                     <img loading="lazy" src="{{matchup.leftWikipediaLogoUrl}}" class="w-16 h-16" />
                 </div>
-                <div class="flex justify-center mt-2">
+                <div class="flex justify-center items-center mt-2 text-sm">
+                    ({{matchup.leftRecord}})
+                </div>
+                <div class="flex justify-center items-center text-lg">
                     {{matchup.leftTeam}}
                 </div>
-                <div class="flex justify-center mt-2 text-3xl">
+                <div class="flex justify-center items-center mt-2 text-3xl">
                     {{matchup.leftScore}}
                 </div>
             </div>
@@ -27,13 +30,16 @@
                 </div>
             </div>
             <div class="basis-5/12 flex flex-col text-black">
-                <div class="flex justify-center">
+                <div class="flex justify-center items-center">
                     <img loading="lazy" src="{{matchup.rightWikipediaLogoUrl}}" class="w-16 h-16" />
                 </div>
-                <div class="flex justify-center mt-2">
+                <div class="flex justify-center items-center mt-2 text-sm">
+                    ({{matchup.rightRecord}})
+                </div>
+                <div class="flex justify-center items-center text-lg">
                     {{matchup.rightTeam}}
                 </div>
-                <div class="flex justify-center mt-2 text-3xl">
+                <div class="flex justify-center items-center mt-2 text-3xl">
                     {{matchup.rightScore}}
                 </div>
             </div>

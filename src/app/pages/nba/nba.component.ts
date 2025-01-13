@@ -138,11 +138,13 @@ export class NbaComponent {
     if(!this.selectedLeftTeam || !this.selectedRightTeam)  return
     var matchup = {
       "leftTeam": this.selectedLeftTeam.team,
+      "leftRecord": `${this.selectedLeftTeam.wins}-${this.selectedLeftTeam.losses}`,
       "leftScore": this.leftScore,
       "leftSpread": "",
       "rightSpread": "",
       "totalPoints": this.totalPoints,
       "rightScore": this.rightScore,
+      "rightRecord": `${this.selectedRightTeam.wins}-${this.selectedRightTeam.losses}`,
       "rightTeam": this.selectedRightTeam.team,
       "confidence": this.confidenceScore + "%",
       "gameTime": "User Generated",
@@ -162,27 +164,6 @@ export class NbaComponent {
       matchup.gameTime = gameTime;
     }
     this.matchups.push(matchup)
-    // this.gridApi.setGridOption("rowData", this.matchups);
-  }
-
-  setSelectedLeftTeam() {
-    for (const ele of this.allTeams) {
-      if(stringSimilarity.compareTwoStrings((ele.City + " " + ele.Name), this.selectedLeftTeam.team) > .8) {
-        this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
-      }
-    }
-
-    // console.log(this.selectedLeftTeam)
-  }
-
-  setSelectedRightTeam() {
-    for (const ele of this.allTeams) {
-      if(stringSimilarity.compareTwoStrings((ele.City + " " + ele.Name), this.selectedRightTeam.team) > .8) {
-        this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
-      }
-    }
-
-    // console.log(this.selectedRightTeam)
   }
 
   calculateOdds() {

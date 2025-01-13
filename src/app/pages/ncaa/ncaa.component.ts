@@ -144,86 +144,17 @@ export class NCAAComponent implements OnInit {
     for (const key in this.todaysGames) {
       let ele = this.todaysGames[key];
 
-      console.log(key)
-      if(key === "86") {
-        console.log(key)
-      }
+      // console.log(key)
+      // if(key === "86") {
+      //   console.log(key)
+      // }
 
-      // let temp1 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
-      let temp1 = this.allTeams.filter((team: any) => team.GlobalTeamID === ele.GlobalHomeTeamID)[0]
-      if(temp1) {
-        let temp2;
-        temp2 = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.toLowerCase()))[0]
-        if(temp2) {
-          homeTeam = {
-            ...temp1,
-            ...temp2
-          }
-        } else {
-          let schoolName = temp1.School.replace("College", '').trim()
-          schoolName = schoolName.replace("University", '').trim()
-          let schoolRecord = `${temp1.Wins}-${temp1.Losses}`
-          this.allFirestoreTeams.filter((tm: any) => {
-            if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase()) {
-              temp2 = tm
-            } else if (
-              stringSimilarity.compareTwoStrings(schoolName, tm.team) > 0.35 &&
-              this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase() &&
-              schoolRecord === tm.winLoss
-            ) {
-              temp2 = tm;
-            } else if(schoolName === "UIC") {
-              temp2 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Illinois Chicago"))[0]
-            } else if(schoolName === "UAPB") {
-              temp2 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Arkansas Pine Bluff"))[0]
-            }
-          })
-          homeTeam = {
-            ...temp1,
-            ...temp2
-          }
-        }
-      }
+      let homeTeam = this.setSelectedTeam(ele.GlobalHomeTeamID)
+      let awayTeam = this.setSelectedTeam(ele.GlobalAwayTeamID)
 
-      // let temp3 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
-      let temp3 = this.allTeams.filter((team: any) => team.GlobalTeamID === ele.GlobalAwayTeamID)[0]
-      if(temp3) {
-        let temp4;
-        temp4 = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp3.School.toLowerCase()))[0]
-        if(temp4) {
-          awayTeam = {
-            ...temp3,
-            ...temp4
-          }
-        } else {
-          let schoolName = temp3.School.replace("College", '').trim()
-          schoolName = schoolName.replace("University", '').trim()
-          let schoolRecord = `${temp3.Wins}-${temp3.Losses}`
-          this.allFirestoreTeams.filter((tm: any) => {
-            if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase()) {
-              temp4 = tm
-            } else if (
-              stringSimilarity.compareTwoStrings(schoolName, tm.team) > 0.35 &&
-              this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase() &&
-              schoolRecord === tm.winLoss
-            ) {
-              temp4 = tm;
-            } else if(schoolName === "UIC") {
-              temp4 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Illinois Chicago"))[0]
-            } else if(schoolName === "UAPB") {
-              temp4 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Arkansas Pine Bluff"))[0]
-            }
-          })
-          awayTeam = {
-            ...temp3,
-            ...temp4
-          }
-        }
-      }
-
-      if(homeTeam.School === "Stanford" || awayTeam.School === "Stanford") {
-        console.log("here")
-      }
+      // if(homeTeam.School === "Stanford" || awayTeam.School === "Stanford") {
+      //   console.log("here")
+      // }
 
       if(homeTeam && awayTeam) {
         gameTime = new Date(ele.DateTime).toLocaleTimeString();
@@ -251,13 +182,16 @@ export class NCAAComponent implements OnInit {
     if(!this.selectedLeftTeam || !this.selectedRightTeam)  return
     var matchup = {
       "leftTeam": this.selectedLeftTeam.team,
+      "leftRecord": this.selectedLeftTeam.winLoss,
       "leftScore": this.leftScore,
       "leftSpread": "",
       "rightSpread": "",
       "totalPoints": this.totalPoints,
       "rightScore": this.rightScore,
+      "rightRecord": this.selectedRightTeam.winLoss,
       "rightTeam": this.selectedRightTeam.team,
       "confidence": this.confidenceScore + "%",
+      "location": this.selectedLeftTeam.homeTeam ? this.selectedLeftTeam.Stadium : this.selectedRightTeam.Stadium,
       "gameTime": "User Generated",
       "remove": "",
       "leftTeamLogoUrl": this.selectedLeftTeam.TeamLogoUrl,
@@ -275,42 +209,49 @@ export class NCAAComponent implements OnInit {
       matchup.gameTime = gameTime;
     }
     this.matchups.push(matchup)
-    // this.gridApi.setGridOption("rowData", this.matchups);
   }
 
-  setSelectedLeftTeam() {
-    for (const ele of this.allTeams) {
-      if(this.selectedLeftTeam.team && stringSimilarity.compareTwoStrings(ele.School, this.selectedLeftTeam.team) > .8) {
-        if(this.conferenceMap.get(ele.Conference) === this.selectedLeftTeam.conference) {
-          this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
+  setSelectedTeam(id: any) {
+    let team: any;
+    let temp1 = this.allTeams.filter((team: any) => team.GlobalTeamID === id)[0]
+    if(temp1) {
+      let temp2;
+      temp2 = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.toLowerCase()))[0]
+      if(temp2) {
+        team = {
+          ...temp1,
+          ...temp2
+        }
+      } else {
+        let schoolName = temp1.School.replace("College", '').trim()
+        schoolName = schoolName.replace("University", '').trim()
+        let schoolRecord = `${temp1.Wins}-${temp1.Losses}`
+        this.allFirestoreTeams.filter((tm: any) => {
+          if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase()) {
+            temp2 = tm
+          } else if (
+            stringSimilarity.compareTwoStrings(schoolName, tm.team) > 0.35 &&
+            this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase() &&
+            schoolRecord === tm.winLoss
+          ) {
+            temp2 = tm;
+          } else if(schoolName === "UIC") {
+            temp2 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Illinois Chicago"))[0]
+          } else if(schoolName === "UAPB") {
+            temp2 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Arkansas Pine Bluff"))[0]
+          }
+        })
+        team = {
+          ...temp1,
+          ...temp2
         }
       }
     }
-    for (const ele of this.allTeamSeasonStats) {
-      if(ele.GlobalTeamID === this.selectedLeftTeam.GlobalTeamID) {
-          this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
-      }
-    }
-  }
-
-  setSelectedRightTeam() {
-    for (const ele of this.allTeams) {
-      if(this.selectedRightTeam.team && stringSimilarity.compareTwoStrings(ele.School, this.selectedRightTeam.team) > .8) {
-        if(this.conferenceMap.get(ele.Conference) === this.selectedRightTeam.conference) {
-          this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
-        }
-      }
-    }
-    for (const ele of this.allTeamSeasonStats) {
-      if(ele.GlobalTeamID === this.selectedRightTeam.GlobalTeamID) {
-          this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
-      }
-    }
+    team.homeTeam = true
+    return team
   }
 
   calculateOdds() {
-    if(this.selectedLeftTeam) this.setSelectedLeftTeam()
-    if(this.selectedRightTeam) this.setSelectedRightTeam()
     if (this.selectedLeftTeam && this.selectedRightTeam) {
       let rightTeam: any, leftTeam: any
       let adv = .010;
