@@ -214,13 +214,23 @@ export class NCAAComponent implements OnInit {
   setSelectedTeam(id: any) {
     let team: any;
     let temp1 = this.allTeams.filter((team: any) => team.GlobalTeamID === id)[0]
+    let temp2: any
     if(temp1) {
-      let temp2;
-      temp2 = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.toLowerCase()))[0]
-      if(temp2) {
+      temp2 = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.toLowerCase()))
+      
+      if(temp1.School.includes("Michigan")) {
+        console.log("here")
+      }
+      if(temp2 && temp2.length === 1) {
         team = {
           ...temp1,
-          ...temp2
+          ...temp2[0]
+        }
+      } else if(temp2 && temp2.length > 1) {
+        let temp3 = temp2.filter((tm: any) => tm.conference === this.conferenceMap.get(temp1.Conference) && tm.winLoss.split("-")[0] == temp1.Wins)[0]
+        team = {
+          ...temp1,
+          ...temp3
         }
       } else {
         let schoolName = temp1.School.replace("College", '').trim()
@@ -244,6 +254,9 @@ export class NCAAComponent implements OnInit {
         team = {
           ...temp1,
           ...temp2
+        }
+        if(team.School.includes("Michigan")) {
+          console.log("here")
         }
       }
     }
