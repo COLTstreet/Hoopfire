@@ -18,12 +18,11 @@ import { combineLatest } from 'rxjs';
 declare var stringSimilarity: any
 
 @Component({
-  selector: 'app-nba',
-  standalone: true,
-  imports: [Select, FormsModule, CommonModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Toast, Card, Chip],
-  templateUrl: './nba.component.html',
-  styleUrl: './nba.component.scss',
-  providers: [ConfirmationService, MessageService]
+    selector: 'app-nba',
+    imports: [Select, FormsModule, CommonModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Toast, Card, Chip],
+    templateUrl: './nba.component.html',
+    styleUrl: './nba.component.scss',
+    providers: [ConfirmationService, MessageService]
 })
 export class NbaComponent {
 

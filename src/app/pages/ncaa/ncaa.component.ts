@@ -10,12 +10,11 @@ import { combineLatest } from 'rxjs';
 declare var stringSimilarity: any
 
 @Component({
-  selector: 'app-ncaa',
-  standalone: true,
-  imports: [FormsModule, CommonModule, Card, Chip],
-  templateUrl: './ncaa.component.html',
-  styleUrl: './ncaa.component.scss',
-  providers: [ConfirmationService, MessageService]
+    selector: 'app-ncaa',
+    imports: [FormsModule, CommonModule, Card, Chip],
+    templateUrl: './ncaa.component.html',
+    styleUrl: './ncaa.component.scss',
+    providers: [ConfirmationService, MessageService]
 })
 export class NCAAComponent implements OnInit {
 

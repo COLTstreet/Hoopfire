@@ -17,12 +17,11 @@ import * as XLSX from 'xlsx';
 declare var stringSimilarity: any
 
 @Component({
-  selector: 'app-custom-games',
-  standalone: true,
-  imports: [Select, FormsModule, CommonModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Toast, Card, Chip],
-  templateUrl: './custom-games.component.html',
-  styleUrl: './custom-games.component.scss',
-  providers: [ConfirmationService, MessageService]
+    selector: 'app-custom-games',
+    imports: [Select, FormsModule, CommonModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Toast, Card, Chip],
+    templateUrl: './custom-games.component.html',
+    styleUrl: './custom-games.component.scss',
+    providers: [ConfirmationService, MessageService]
 })
 export class CustomGamesComponent {
 
