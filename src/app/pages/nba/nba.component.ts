@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { DataService } from '../../services/data.service';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
 import { Button } from 'primeng/button';
 import { Tooltip } from 'primeng/tooltip';
@@ -19,7 +19,7 @@ declare var stringSimilarity: any
 
 @Component({
     selector: 'app-nba',
-    imports: [Select, FormsModule, CommonModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Toast, Card, Chip],
+    imports: [Select, FormsModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Toast, Card, Chip],
     templateUrl: './nba.component.html',
     styleUrl: './nba.component.scss',
     providers: [ConfirmationService, MessageService]

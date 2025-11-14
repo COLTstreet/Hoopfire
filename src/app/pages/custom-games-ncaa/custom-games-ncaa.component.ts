@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DataService } from '../../services/data.service';
 import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -17,7 +17,7 @@ declare var stringSimilarity: any
 
 @Component({
     selector: 'app-custom-games-ncaa',
-    imports: [DropdownModule, FormsModule, CommonModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule, Select],
+    imports: [DropdownModule, FormsModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule, Select],
     templateUrl: './custom-games-ncaa.component.html',
     styleUrl: './custom-games-ncaa.component.scss',
     providers: [ConfirmationService, MessageService]

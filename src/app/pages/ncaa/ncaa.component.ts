@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { DataService } from '../../services/data.service';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Card } from 'primeng/card';
 import { Chip } from 'primeng/chip';
@@ -11,7 +11,7 @@ declare var stringSimilarity: any
 
 @Component({
     selector: 'app-ncaa',
-    imports: [FormsModule, CommonModule, Card, Chip],
+    imports: [FormsModule, Card, Chip],
     templateUrl: './ncaa.component.html',
     styleUrl: './ncaa.component.scss',
     providers: [ConfirmationService, MessageService]

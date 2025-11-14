@@ -1,91 +1,97 @@
 <div class="">
-    <p-toast></p-toast>
-    <p-confirmDialog></p-confirmDialog>
-    <div class="grid grid-cols-12 gap-4 m-0">
-        <div class="col-span-12">
-            <div class="flex justify-between">
-                <p-button icon="pi pi-file-excel" [rounded]="true" [text]="true" pTooltip="Clear All Games"
-                    (onClick)="exportToExcel()"></p-button>
-                <p-button icon="pi pi-times-circle" [rounded]="true" [text]="true" pTooltip="Clear All Games"
-                    (onClick)="clearAllGames()"></p-button>
-            </div>
-        </div>
-        <div class="col-span-12 lg:col-span-6">
-            <div id="leftCard"
-                class="bg-surface-0 dark:bg-surface-900 p-6 shadow rounded-border opacity-90 relative z-50">
-                <div class="grid grid-cols-12 gap-4">
-                    <div class="col-span-3">
-                        <span class="text-7xl">{{leftScore}}</span>
-                    </div>
-                    <div class="col-span-9">
-                        <p-select [options]="allFirestoreTeams" [(ngModel)]="selectedLeftTeam" optionLabel="team"
-                            placeholder="Select a Team" class="w-full md:w-56" [filter]="true" filterBy="team"
-                            [showClear]="true" (onChange)="calculateOdds()" />
-                        <div *ngIf="selectedLeftTeam" class="text-center flex items-center justify-center m-6"
-                            style="height: 130px;"><img style="width: 125px;"
-                                src="{{selectedLeftTeam.WikipediaLogoUrl}}"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-span-12 lg:col-span-6">
-            <div id="rightCard"
-                class="bg-surface-0 dark:bg-surface-900 p-6 shadow rounded-border opacity-90 relative z-40">
-                <div class="grid grid-cols-12 gap-4">
-                    <div class="col-span-3">
-                        <span class="text-7xl">{{rightScore}}</span>
-                    </div>
-                    <div class="col-span-9">
-                        <p-select [options]="allFirestoreTeams" [(ngModel)]="selectedRightTeam" optionLabel="team"
-                            placeholder="Select a Team" class="w-full md:w-56" [filter]="true" filterBy="team"
-                            [showClear]="true" (onChange)="calculateOdds()" />
-                        <div *ngIf="selectedRightTeam" class="text-center flex items-center justify-center m-6"
-                            style="height: 130px;">
-                            <img style="width: 125px;" src="{{selectedRightTeam.WikipediaLogoUrl}}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+  <div class="grid grid-cols-12 gap-4 m-0">
+    <div class="col-span-12">
+      <div class="flex justify-between">
+        <p-button icon="pi pi-file-excel" [rounded]="true" [text]="true" pTooltip="Clear All Games"
+        (onClick)="exportToExcel()"></p-button>
+        <p-button icon="pi pi-times-circle" [rounded]="true" [text]="true" pTooltip="Clear All Games"
+        (onClick)="clearAllGames()"></p-button>
+      </div>
     </div>
-    <div class="flex justify-center mt-2">
+    <div class="col-span-12 lg:col-span-6">
+      <div id="leftCard"
+        class="bg-surface-0 dark:bg-surface-900 p-6 shadow rounded-border opacity-90 relative z-50">
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-3">
+            <span class="text-7xl">{{leftScore}}</span>
+          </div>
+          <div class="col-span-9">
+            <p-select [options]="allFirestoreTeams" [(ngModel)]="selectedLeftTeam" optionLabel="team"
+              placeholder="Select a Team" class="w-full md:w-56" [filter]="true" filterBy="team"
+              [showClear]="true" (onChange)="calculateOdds()" />
+              @if (selectedLeftTeam) {
+                <div class="text-center flex items-center justify-center m-6"
+                  style="height: 130px;"><img style="width: 125px;"
+                src="{{selectedLeftTeam.WikipediaLogoUrl}}"></div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-span-12 lg:col-span-6">
+        <div id="rightCard"
+          class="bg-surface-0 dark:bg-surface-900 p-6 shadow rounded-border opacity-90 relative z-40">
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-3">
+              <span class="text-7xl">{{rightScore}}</span>
+            </div>
+            <div class="col-span-9">
+              <p-select [options]="allFirestoreTeams" [(ngModel)]="selectedRightTeam" optionLabel="team"
+                placeholder="Select a Team" class="w-full md:w-56" [filter]="true" filterBy="team"
+                [showClear]="true" (onChange)="calculateOdds()" />
+                @if (selectedRightTeam) {
+                  <div class="text-center flex items-center justify-center m-6"
+                    style="height: 130px;">
+                    <img style="width: 125px;" src="{{selectedRightTeam.WikipediaLogoUrl}}">
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-center mt-2">
         <p-button label="Add To Table" (onClick)="addMatchup('User Generated')" class="full-width"></p-button>
-    </div>
-    <div class="grid grid-cols-12 gap-4 m-0">
-        <div class="col-span-12 md:col-span-6 xl:col-span-4 p-4" *ngFor="let game of matchups; index as i">
+      </div>
+      <div class="grid grid-cols-12 gap-4 m-0">
+        @for (game of matchups; track game; let i = $index) {
+          <div class="col-span-12 md:col-span-6 xl:col-span-4 p-4">
             <div class="bg-surface-0 dark:bg-surface-900 shadow rounded-border p-6 relative">
-                <p-button icon="pi pi-times" [rounded]="true" [text]="true" pTooltip="Remove Game"
-                    (onClick)="confirmRemoveSingleGame($event, i)" class="remove-game-button"></p-button>
-                <div class="flex justify-between">
-                    <div class="flex border-b border-surface pb-6">
-                        <div class="flex flex-col">
-                            <span class="text-xl font-medium mb-1">{{game.leftScore}}</span>
-                            <span
-                                class="text-surface-600 dark:text-surface-200 font-medium mb-2">{{game.leftTeam}}</span>
-                            <span
-                                class="bg-blue-50 text-blue-400 rounded-border inline-flex py-1 px-2 text-sm">{{game.leftSpread}}</span>
-                        </div>
-                        <img src="{{game.leftWikipediaLogoUrl}}" style="width: 70px;height: 70px" class="ml-4" />
-                    </div>
-                    <div class="flex border-b border-surface pb-6">
-                        <img src="{{game.rightWikipediaLogoUrl}}" style="width: 70px;height: 70px" class="mr-4" />
-                        <div class="flex flex-col">
-                            <span class="text-xl font-medium mb-1">{{game.rightScore}}</span>
-                            <span
-                                class="text-surface-600 dark:text-surface-200 font-medium mb-2">{{game.rightTeam}}</span>
-                            <span
-                                class="bg-blue-50 text-blue-400 rounded-border inline-flex py-1 px-2 text-sm">{{game.rightSpread}}</span>
-                        </div>
-                    </div>
+              <p-button icon="pi pi-times" [rounded]="true" [text]="true" pTooltip="Remove Game"
+              (onClick)="confirmRemoveSingleGame($event, i)" class="remove-game-button"></p-button>
+              <div class="flex justify-between">
+                <div class="flex border-b border-surface pb-6">
+                  <div class="flex flex-col">
+                    <span class="text-xl font-medium mb-1">{{game.leftScore}}</span>
+                    <span
+                    class="text-surface-600 dark:text-surface-200 font-medium mb-2">{{game.leftTeam}}</span>
+                    <span
+                    class="bg-blue-50 text-blue-400 rounded-border inline-flex py-1 px-2 text-sm">{{game.leftSpread}}</span>
+                  </div>
+                  <img src="{{game.leftWikipediaLogoUrl}}" style="width: 70px;height: 70px" class="ml-4" />
                 </div>
-                <div class="flex justify-between pt-6">
-                    <div class="text-xl font-medium">Total Points: {{game.totalPoints}}</div>
-                    <div class="text-xl font-medium">Confidence: {{game.confidence}}</div>
+                <div class="flex border-b border-surface pb-6">
+                  <img src="{{game.rightWikipediaLogoUrl}}" style="width: 70px;height: 70px" class="mr-4" />
+                  <div class="flex flex-col">
+                    <span class="text-xl font-medium mb-1">{{game.rightScore}}</span>
+                    <span
+                    class="text-surface-600 dark:text-surface-200 font-medium mb-2">{{game.rightTeam}}</span>
+                    <span
+                    class="bg-blue-50 text-blue-400 rounded-border inline-flex py-1 px-2 text-sm">{{game.rightSpread}}</span>
+                  </div>
                 </div>
-                <div class="flex justify-center pt-6">
-                    <div class="text-xl font-medium mb-1">{{game.gameTime}}</div>
-                </div>
+              </div>
+              <div class="flex justify-between pt-6">
+                <div class="text-xl font-medium">Total Points: {{game.totalPoints}}</div>
+                <div class="text-xl font-medium">Confidence: {{game.confidence}}</div>
+              </div>
+              <div class="flex justify-center pt-6">
+                <div class="text-xl font-medium mb-1">{{game.gameTime}}</div>
+              </div>
             </div>
-        </div>
+          </div>
+        }
+      </div>
     </div>
-</div>
