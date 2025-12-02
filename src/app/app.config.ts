@@ -12,10 +12,9 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { providePrimeNG } from 'primeng/config';
-import { definePreset, palette } from '@primeng/themes';
-import Aura from '@primeng/themes/aura';
+import { definePreset, palette } from '@primeuix/themes';
+import Aura from '@primeuix/themes/aura';
 
-//The default Coke Theme
 const themePalette = palette('#F06644');
 const presetTheme = definePreset(Aura, {
   semantic: {
@@ -32,7 +31,6 @@ const presetTheme = definePreset(Aura, {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideAnimations(),
     provideClientHydration(),
     provideHttpClient(withFetch()),
     providePrimeNG({ 

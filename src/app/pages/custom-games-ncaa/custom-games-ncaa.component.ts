@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { DataService } from '../../services/data.service';
-import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule } from '@angular/forms';
 
 import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
@@ -9,7 +8,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-import { Select } from 'primeng/select';
+import { Select, SelectModule } from 'primeng/select';
 
 import * as XLSX from 'xlsx';
 
@@ -17,7 +16,7 @@ declare var stringSimilarity: any
 
 @Component({
     selector: 'app-custom-games-ncaa',
-    imports: [DropdownModule, FormsModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule, Select],
+    imports: [SelectModule, FormsModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule, Select],
     templateUrl: './custom-games-ncaa.component.html',
     styleUrl: './custom-games-ncaa.component.scss',
     providers: [ConfirmationService, MessageService]

@@ -62,6 +62,7 @@ export class NCAAComponent implements OnInit {
     this.neutral = true
     
     this.conferenceMap.set("American Athletic", "Amer" )
+    this.conferenceMap.set("American", "Amer" )
     this.conferenceMap.set("Atlantic Coast", "ACC" )
     this.conferenceMap.set("Big Ten", "B10" )
     this.conferenceMap.set("Big 12", "B12" )
@@ -217,9 +218,9 @@ export class NCAAComponent implements OnInit {
     if(temp1) {
       temp2 = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.toLowerCase()))
       
-      if(temp1.School.includes("Michigan")) {
-        console.log("here")
-      }
+      // if(temp1.School.includes("Michigan")) {
+      //   console.log("here")
+      // }
       if(temp2 && temp2.length === 1) {
         team = {
           ...temp1,
@@ -236,9 +237,9 @@ export class NCAAComponent implements OnInit {
         schoolName = schoolName.replace("University", '').trim()
         let schoolRecord = `${temp1.Wins}-${temp1.Losses}`
         this.allFirestoreTeams.filter((tm: any) => {
-          if(stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase()) {
+          if(temp1.Conference != null && temp1.Conference != undefined && stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase()) {
             temp2 = tm
-          } else if (
+          } else if (temp1.Conference != null && temp1.Conference != undefined &&
             stringSimilarity.compareTwoStrings(schoolName, tm.team) > 0.35 &&
             this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase() &&
             schoolRecord === tm.winLoss

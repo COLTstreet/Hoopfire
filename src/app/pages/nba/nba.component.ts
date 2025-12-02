@@ -7,7 +7,6 @@ import { Button } from 'primeng/button';
 import { Tooltip } from 'primeng/tooltip';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { Toast } from 'primeng/toast';
 import { Card } from 'primeng/card';
 import { Chip } from 'primeng/chip';
 
@@ -19,7 +18,7 @@ declare var stringSimilarity: any
 
 @Component({
     selector: 'app-nba',
-    imports: [Select, FormsModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Toast, Card, Chip],
+    imports: [Select, FormsModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Card, Chip],
     templateUrl: './nba.component.html',
     styleUrl: './nba.component.scss',
     providers: [ConfirmationService, MessageService]

@@ -25,17 +25,17 @@ export class DataService {
   }
 
   getNBATeams(): Observable<any> {
-    return this.getWithKey("https://api.sportsdata.io/v3/nba/scores/json/teams", "ec152bc50abf4e5b9ca29809636371aa");
+    return this.getWithKey("https://api.sportsdata.io/v3/nba/scores/json/teams", "0454641805084287b986922e21b0b81f");
   }
 
   getTodaysNBASchedule() {
     let today = new Date().toDateString().split(' ');
     let date = today[3] + '-' + today[1].toUpperCase() + '-' + today[2]
-    return this.getWithKey("https://api.sportsdata.io/v3/nba/scores/json/GamesByDate/" + date, "ec152bc50abf4e5b9ca29809636371aa");
+    return this.getWithKey("https://api.sportsdata.io/v3/nba/scores/json/GamesByDate/" + date, "0454641805084287b986922e21b0b81f");
   }
 
   getAllNBAInjuries() {
-    return this.getWithKey("https://api.sportsdata.io/v3/nba/projections/json/InjuredPlayers", "ec152bc50abf4e5b9ca29809636371aa");
+    return this.getWithKey("https://api.sportsdata.io/v3/nba/projections/json/InjuredPlayers", "0454641805084287b986922e21b0b81f");
   }
 
   getNCAAMAnalytics(): Observable<any> {
@@ -44,22 +44,22 @@ export class DataService {
   }
 
   getNCAAMTeams(): Observable<any> {
-    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/teams", "98e791070abc4d1fb5201776d3763e83");
+    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/teams", "0454641805084287b986922e21b0b81f");
   }
 
   getTodaysNCAAMSchedule() {
     let today = new Date().toDateString().split(' ');
     let date = today[3] + '-' + today[1].toUpperCase() + '-' + today[2]
-    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/GamesByDate/" + date, "98e791070abc4d1fb5201776d3763e83");
+    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/GamesByDate/" + date, "0454641805084287b986922e21b0b81f");
   }
 
   getAllNCAAMInjuries() {
-    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/InjuredPlayers", "98e791070abc4d1fb5201776d3763e83");
+    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/InjuredPlayers", "0454641805084287b986922e21b0b81f");
   }
 
   getAllNCAAMTeamSeasonStats() {
     let year = 2024
-    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/TeamSeasonStats/" + year, "98e791070abc4d1fb5201776d3763e83");
+    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/TeamSeasonStats/" + year, "0454641805084287b986922e21b0b81f");
   }
   
 
