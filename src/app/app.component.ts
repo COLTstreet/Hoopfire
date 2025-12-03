@@ -1,23 +1,41 @@
 import { Component, inject } from '@angular/core';
-import { RouterModule, RouterOutlet } from '@angular/router';
+import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { DataService } from './services/data.service';
-import { PrimeNG } from 'primeng/config';
 import { ButtonModule } from 'primeng/button';
 import { HeaderComponent } from './common/header/header.component';
+import { SplitButtonModule } from 'primeng/splitbutton';
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, RouterModule, ButtonModule, HeaderComponent],
+    imports: [RouterOutlet, RouterModule, ButtonModule, HeaderComponent, SplitButtonModule],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
 export class AppComponent {
   title = 'hoopfire-2024';
+
+  itemsNCAA: any[] = [];
+  itemsNBA: any[] = [];
   
-  public config: PrimeNG = inject(PrimeNG);
-
-  constructor(public _dataService: DataService) {
-
+  constructor(public _dataService: DataService, private _router: Router) {
+      this.itemsNCAA = [
+        {
+            label: 'Update',
+            icon: 'pi pi-refresh',
+            command: () => {
+              this._router.navigate(['/custom-games-ncaa']);
+            },
+        },
+      ]
+      this.itemsNBA = [
+        {
+            label: 'Update',
+            icon: 'pi pi-refresh',
+            command: () => {
+              this._router.navigate(['/custom-games']);
+            },
+        },
+      ]
   }
 
   setActive(type: any) {

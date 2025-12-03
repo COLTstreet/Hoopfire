@@ -2,16 +2,10 @@
 <div class="px-2 py-6 md:px-6">
     <div class="flex flex-row gap-1">
         <div class="basis-1/2">
-            <p-button icon="pi pi-pencil" class="h-full split-button-left"
-                styleClass="h-full bg-secondary b-secondary" severity="secondary" routerLink="/custom-games-ncaa" />
-            <p-button label="NCAA" class="w-10/12 h-full split-button-right" styleClass="w-10/12 h-full"
-                routerLink="/ncaa" />
+            <p-splitbutton routerLink="/ncaa" label="NCAA" dropdownIcon="pi pi-pencil" [model]="itemsNCAA" class="w-full" />
         </div>
         <div class="basis-1/2">
-            <p-button icon="pi pi-pencil" class="h-full split-button-left"
-                styleClass="w-2/12 h-full bg-secondary b-secondary" severity="secondary" routerLink="/custom-games" />
-            <p-button label="NBA" class="w-10/12 h-full split-button-right" styleClass="w-10/12 h-full"
-                routerLink="/nba" />
+            <p-splitbutton routerLink="/nba" label="NBA" dropdownIcon="pi pi-pencil" [model]="itemsNBA" class="w-full" />   
         </div>
     </div>
     <router-outlet></router-outlet>

@@ -15,7 +15,7 @@ import { providePrimeNG } from 'primeng/config';
 import { definePreset, palette } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
-const themePalette = palette('#F06644');
+const themePalette = palette('#619B46');
 const presetTheme = definePreset(Aura, {
   semantic: {
     primary: themePalette,
@@ -31,6 +31,7 @@ const presetTheme = definePreset(Aura, {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
+    provideAnimations(),
     provideClientHydration(),
     provideHttpClient(withFetch()),
     providePrimeNG({ 
