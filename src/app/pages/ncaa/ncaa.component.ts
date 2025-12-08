@@ -94,6 +94,7 @@ export class NCAAComponent implements OnInit {
     this.conferenceMap.set("Southern", "SC" )
     this.conferenceMap.set("Big Sky", "BSky" )
     this.conferenceMap.set("Big South", "BSth" )
+    this.conferenceMap.set("Ivy League", "Ivy" )
 
     this.getNCAAData()
   }
@@ -141,8 +142,9 @@ export class NCAAComponent implements OnInit {
     let awayTeam: any;
     let gameTime: any;
     let todaysMatchups = [];
-    for (const key in this.todaysGames) {
-      let ele = this.todaysGames[key];
+    let todaysGames = this.todaysGames.filter((ele: any) => ele.Status !== "Final")
+    for (const key in todaysGames) {
+      let ele = todaysGames[key];
 
       // console.log(key)
       // if(key === "86") {
