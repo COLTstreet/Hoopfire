@@ -49,7 +49,9 @@ export class CustomGamesNcaaComponent {
   totalPoints: any | undefined
 
   selectedLeftTeam: any | undefined;
+  selectedLeftDisplayTeam: any | undefined;
   selectedRightTeam: any | undefined;
+  selectedRightDisplayTeam: any | undefined;
 
   allTeamSeasonStats: any = []
   allTeams: any = []
@@ -225,9 +227,9 @@ export class CustomGamesNcaaComponent {
 
   setSelectedLeftTeam() {
     for (const ele of this.allTeams) {
-      if(stringSimilarity.compareTwoStrings(ele.School, this.selectedLeftTeam.team) > .8) {
-        if(this.conferenceMap.get(ele.Conference) === this.selectedLeftTeam.conference) {
-          this.selectedLeftTeam = {...this.selectedLeftTeam, ...ele};
+      if(stringSimilarity.compareTwoStrings(ele.School, this.selectedLeftDisplayTeam.team) > .8) {
+        if(this.conferenceMap.get(ele.Conference) === this.selectedLeftDisplayTeam.conference) {
+          this.selectedLeftTeam = {...this.selectedLeftDisplayTeam, ...ele};
         }
       }
     }
@@ -240,9 +242,9 @@ export class CustomGamesNcaaComponent {
 
   setSelectedRightTeam() {
     for (const ele of this.allTeams) {
-      if(stringSimilarity.compareTwoStrings(ele.School, this.selectedRightTeam.team) > .8) {
-        if(this.conferenceMap.get(ele.Conference) === this.selectedRightTeam.conference) {
-          this.selectedRightTeam = {...this.selectedRightTeam, ...ele};
+      if(stringSimilarity.compareTwoStrings(ele.School, this.selectedRightDisplayTeam.team) > .8) {
+        if(this.conferenceMap.get(ele.Conference) === this.selectedRightDisplayTeam.conference) {
+          this.selectedRightTeam = {...this.selectedRightDisplayTeam, ...ele};
         }
       }
     }
@@ -293,8 +295,8 @@ export class CustomGamesNcaaComponent {
   }
 
   calculateOdds() {
-    if(this.selectedLeftTeam) this.setSelectedLeftTeam()
-    if(this.selectedRightTeam) this.setSelectedRightTeam()
+    if(this.selectedLeftDisplayTeam) this.setSelectedLeftTeam()
+    if(this.selectedRightDisplayTeam) this.setSelectedRightTeam()
     if (this.selectedLeftTeam && this.selectedRightTeam) {
       let rightTeam: any, leftTeam: any
       let adv = .010;

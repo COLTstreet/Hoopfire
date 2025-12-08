@@ -15,7 +15,7 @@ import { providePrimeNG } from 'primeng/config';
 import { definePreset, palette } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
-const themePalette = palette('#619B46');
+const themePalette = palette('#F7941D');
 const presetTheme = definePreset(Aura, {
   semantic: {
     primary: themePalette,

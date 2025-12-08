@@ -20,7 +20,7 @@ export class AppComponent {
   constructor(public _dataService: DataService, private _router: Router) {
       this.itemsNCAA = [
         {
-            label: 'Update',
+            label: 'Custom NCAA Matchup',
             icon: 'pi pi-refresh',
             command: () => {
               this._router.navigate(['/custom-games-ncaa']);
@@ -29,7 +29,7 @@ export class AppComponent {
       ]
       this.itemsNBA = [
         {
-            label: 'Update',
+            label: 'Custom NBA Matchup',
             icon: 'pi pi-refresh',
             command: () => {
               this._router.navigate(['/custom-games']);

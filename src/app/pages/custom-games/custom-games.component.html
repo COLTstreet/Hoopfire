@@ -1,10 +1,10 @@
 <div class="">
   <p-toast></p-toast>
   <p-confirmDialog></p-confirmDialog>
-  <div class="grid grid-cols-12 gap-4 m-0">
+  <div class="grid grid-cols-12 gap-2 m-0">
     <div class="col-span-12">
       <div class="flex justify-between">
-        <p-button icon="pi pi-file-excel" [rounded]="true" [text]="true" pTooltip="Clear All Games"
+        <p-button icon="pi pi-file-excel" [rounded]="true" [text]="true" pTooltip="Export All Games"
         (onClick)="exportToExcel()"></p-button>
         <p-button icon="pi pi-times-circle" [rounded]="true" [text]="true" pTooltip="Clear All Games"
         (onClick)="clearAllGames()"></p-button>
@@ -13,7 +13,7 @@
     <div class="col-span-12 lg:col-span-6">
       <div id="leftCard"
         class="bg-surface-0 dark:bg-surface-900 p-6 shadow rounded-border opacity-90 relative z-50">
-        <div class="grid grid-cols-12 gap-4">
+        <div class="grid grid-cols-12 gap-2">
           <div class="col-span-3">
             <span class="text-7xl">{{leftScore}}</span>
           </div>
@@ -33,7 +33,7 @@
       <div class="col-span-12 lg:col-span-6">
         <div id="rightCard"
           class="bg-surface-0 dark:bg-surface-900 p-6 shadow rounded-border opacity-90 relative z-40">
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-3">
               <span class="text-7xl">{{rightScore}}</span>
             </div>
@@ -55,7 +55,7 @@
       <div class="flex justify-center mt-2">
         <p-button label="Add To Table" (onClick)="addMatchup('User Generated')" class="full-width"></p-button>
       </div>
-      <div class="grid grid-cols-12 gap-4 m-0">
+      <div class="grid grid-cols-12 gap-2 m-0">
         @for (game of matchups; track game; let i = $index) {
           <div class="col-span-12 md:col-span-6 xl:col-span-4 p-4">
             <div class="bg-surface-0 dark:bg-surface-900 shadow rounded-border p-6 relative">
