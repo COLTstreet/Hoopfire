@@ -1,69 +1,65 @@
 import { Component } from '@angular/core';
 import { DataService } from '../../services/data.service';
+import { OddsCalculationService } from '../../services/odds-calculation.service';
+import { UtilsService } from '../../services/utils.service';
 import { FormsModule } from '@angular/forms';
 
-import { AgGridAngular } from 'ag-grid-angular'; // AG Grid Component
-import { Button } from 'primeng/button';
-import { Tooltip } from 'primeng/tooltip';
-import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Card } from 'primeng/card';
 import { Chip } from 'primeng/chip';
-
-import * as XLSX from 'xlsx';
-import { Select } from 'primeng/select';
 import { combineLatest } from 'rxjs';
 
-declare var stringSimilarity: any
+import { NBATeam } from '../../models/team.model';
+import { Matchup } from '../../models/matchup.model';
+import { NBAGameSchedule } from '../../models/game-schedule.model';
 
 @Component({
     selector: 'app-nba',
-    imports: [Select, FormsModule, AgGridAngular, Button, Tooltip, ConfirmDialog, Card, Chip],
+    imports: [FormsModule, Card, Chip],
     templateUrl: './nba.component.html',
     styleUrl: './nba.component.scss',
     providers: [ConfirmationService, MessageService]
 })
 export class NbaComponent {
 
-  allFirestoreTeams: any = []
-  leftTeamsList: any = []
-  rightTeamsList: any = []
+  allFirestoreTeams: NBATeam[] = []
 
-  avgPos: any | undefined
-  avgOff: any | undefined
+  avgPos: number | undefined
+  avgOff: number | undefined
 
-  leftHome: any | undefined
-  rightHome: any | undefined
-  neutral: any | undefined
+  leftHome: boolean | undefined
+  rightHome: boolean | undefined
+  neutral: boolean = true
 
-  leftScore: any | undefined
-  leftWinChance: any | undefined
-  leftWinner: any | undefined
+  leftScore: number | undefined
+  leftWinChance: number | undefined
+  leftWinner: boolean | undefined
 
-  rightScore: any | undefined
-  rightWinChance: any | undefined
-  rightWinner: any | undefined
+  rightScore: number | undefined
+  rightWinChance: number | undefined
+  rightWinner: boolean | undefined
 
-  spread: any | undefined
-  winner: any | undefined
-  loser: any | undefined
-  confidenceScore: any | undefined
-  overUnder: any | undefined
-  totalPoints: any | undefined
+  spread: string | undefined
+  winner: NBATeam | undefined
+  confidenceScore: number | undefined
+  overUnder: number | undefined
+  totalPoints: number | undefined
 
-  selectedLeftTeam: any | undefined;
-  selectedRightTeam: any | undefined;
+  selectedLeftTeam: NBATeam | undefined;
+  selectedRightTeam: NBATeam | undefined;
 
-  allTeams: any = []
-  todaysGames: any = []
+  allTeams: NBATeam[] = []
+  todaysGames: NBAGameSchedule[] = []
 
-  matchups: any[] = [];
+  matchups: Matchup[] = [];
 
-  constructor(public _dataService: DataService) {
-
-    this.neutral = true
-
-    this.getNBAData()
+  constructor(
+    public _dataService: DataService,
+    private oddsService: OddsCalculationService,
+    public utilsService: UtilsService
+  ) {
+    this.neutral = true;
+    this.getNBAData();
   }
 
   getNBAData() {
@@ -71,48 +67,80 @@ export class NbaComponent {
       this._dataService.getNBAAnalytics(),
       this._dataService.getNBATeams(),
       this._dataService.getTodaysNBASchedule(),
-    ]).subscribe(([firestoreData, nbaData, scheduleData]: any) => {
-      this.allFirestoreTeams = firestoreData;
-      this.allTeams = nbaData.sort((a: any, b: any) =>
-        a.Name.localeCompare(b.Name)
-      );
-      this.todaysGames = scheduleData;
+    ]).subscribe({
+      next: ([firestoreData, nbaData, scheduleData]: any) => {
+        this.allFirestoreTeams = firestoreData;
+        this.allTeams = nbaData.sort((a: NBATeam, b: NBATeam) =>
+          (a.Name || '').localeCompare(b.Name || '')
+        );
+        this.todaysGames = scheduleData;
 
-      this.calculateNBAAverages();
-      this.calculateTodaysGames();
+        this.calculateNBAAverages();
+        this.calculateTodaysGames();
+      },
+      error: (error: any) => {
+        console.error('Error fetching NBA data:', error);
+      }
     });
   }
 
   calculateNBAAverages() {
-    let ele = this.allFirestoreTeams.filter((d: any) => d.team === "League Average")[0];
-    this.avgPos = ele.pace;
-    this.avgOff = ele.oRtg;
+    if (!this.allFirestoreTeams || this.allFirestoreTeams.length === 0) {
+      return;
+    }
+
+    const leagueAverage = this.allFirestoreTeams.find((d: NBATeam) => d.team === "League Average");
+    
+    if (leagueAverage) {
+      this.avgPos = leagueAverage.pace;
+      this.avgOff = leagueAverage.oRtg;
+    }
   }
 
   calculateTodaysGames() {
-    // this.gridApi.setGridOption("rowData", []);
-    this.matchups = []
-    let leftTeam: any;
-    let rightTeam: any;
-    let gameTime: any;
-    let todaysMatchups = [];
-    for (const key in this.todaysGames) {
-      let ele = this.todaysGames[key];
+    this.matchups = [];
+    const todaysMatchups: Array<[NBATeam, NBATeam, string]> = [];
 
-      let temp1 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.HomeTeam.toLowerCase()))[0]
-      leftTeam = {
-        ...temp1,
-        ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((temp1.City + ' ' + temp1.Name).toLowerCase()))[0]
+    for (const game of this.todaysGames) {
+      const homeTeamData = this.allTeams.find((team: NBATeam) => 
+        team.Key?.toLowerCase().includes(game.HomeTeam.toLowerCase())
+      );
+      
+      const awayTeamData = this.allTeams.find((team: NBATeam) => 
+        team.Key?.toLowerCase().includes(game.AwayTeam.toLowerCase())
+      );
+
+      if (!homeTeamData || !awayTeamData) {
+        continue;
       }
 
-      let temp2 = this.allTeams.filter((team: any) => team.Key.toLowerCase().includes(ele.AwayTeam.toLowerCase()))[0]
-      rightTeam = {
-        ...temp2,
-        ...this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes((temp2.City + ' ' + temp2.Name).toLowerCase()))[0]
+      const homeTeamName = `${homeTeamData.City} ${homeTeamData.Name}`.toLowerCase();
+      const awayTeamName = `${awayTeamData.City} ${awayTeamData.Name}`.toLowerCase();
+
+      const homeFirestoreTeam = this.allFirestoreTeams.find((tm: NBATeam) => 
+        tm.team.toLowerCase().includes(homeTeamName)
+      );
+      
+      const awayFirestoreTeam = this.allFirestoreTeams.find((tm: NBATeam) => 
+        tm.team.toLowerCase().includes(awayTeamName)
+      );
+
+      if (!homeFirestoreTeam || !awayFirestoreTeam) {
+        continue;
       }
 
-      gameTime = new Date(ele.DateTime).toLocaleTimeString()
-      todaysMatchups.push([leftTeam, rightTeam, gameTime])
+      const leftTeam: NBATeam = {
+        ...homeTeamData,
+        ...homeFirestoreTeam
+      };
+
+      const rightTeam: NBATeam = {
+        ...awayTeamData,
+        ...awayFirestoreTeam
+      };
+
+      const gameTime = new Date(game.DateTime).toLocaleTimeString();
+      todaysMatchups.push([leftTeam, rightTeam, gameTime]);
     }
 
     if (todaysMatchups.length > 0) {
@@ -125,140 +153,74 @@ export class NbaComponent {
       }
     }
     
+    // Reset state
     this.leftWinner = false;
     this.rightWinner = false;
     this.spread = '';
-    this.confidenceScore = '';
-    // console.log(this.matchups)
+    this.confidenceScore = undefined;
   }
 
-  addMatchup(gameTime: any) {
-    if(!this.selectedLeftTeam || !this.selectedRightTeam)  return
-    var matchup = {
+  addMatchup(gameTime: string) {
+    if (!this.selectedLeftTeam || !this.selectedRightTeam) {
+      return;
+    }
+
+    const matchup: Matchup = {
       "leftTeam": this.selectedLeftTeam.team,
-      "leftRecord": `${this.selectedLeftTeam.wins}-${this.selectedLeftTeam.losses}`,
-      "leftScore": this.leftScore,
+      "leftRecord": `${this.selectedLeftTeam.wins || 0}-${this.selectedLeftTeam.losses || 0}`,
+      "leftScore": this.leftScore || 0,
       "leftSpread": "",
       "rightSpread": "",
-      "totalPoints": this.totalPoints,
-      "rightScore": this.rightScore,
-      "rightRecord": `${this.selectedRightTeam.wins}-${this.selectedRightTeam.losses}`,
+      "totalPoints": this.totalPoints || 0,
+      "rightScore": this.rightScore || 0,
+      "rightRecord": `${this.selectedRightTeam.wins || 0}-${this.selectedRightTeam.losses || 0}`,
       "rightTeam": this.selectedRightTeam.team,
-      "confidence": this.confidenceScore + "%",
-      "gameTime": "User Generated",
+      "confidence": (this.confidenceScore || 0) + "%",
+      "gameTime": gameTime || "User Generated",
       "remove": "",
       "leftWikipediaLogoUrl": this.selectedLeftTeam.WikipediaLogoUrl,
       "rightWikipediaLogoUrl": this.selectedRightTeam.WikipediaLogoUrl
     };
-    if(matchup.leftScore > matchup.rightScore) {
-      matchup.leftSpread = this.spread,
-      matchup.rightSpread = this.spread.replace("-","+")
-    } else {
-      matchup.rightSpread = this.spread,
-      matchup.leftSpread = this.spread.replace("-","+")
-    }
 
-    if(gameTime) {
-      matchup.gameTime = gameTime;
-    }
-    this.matchups.push(matchup)
+    // Calculate spreads using utility service
+    const spreads = this.utilsService.calculateSpreads(matchup.leftScore, matchup.rightScore, this.spread || "");
+    matchup.leftSpread = spreads.leftSpread;
+    matchup.rightSpread = spreads.rightSpread;
+
+    this.matchups.push(matchup);
   }
 
   calculateOdds() {
-    if (this.selectedLeftTeam && this.selectedRightTeam) {
-      let rightTeam: any, leftTeam: any
-      let adv = .010;
-      if (this.leftHome || this.neutral) {
-        leftTeam = this.selectedLeftTeam;
-        rightTeam = this.selectedRightTeam;
-      } else if (this.rightHome) {
-        leftTeam = this.selectedRightTeam;
-        rightTeam = this.selectedLeftTeam;
-      }
+    if (!this.selectedLeftTeam || !this.selectedRightTeam || !this.avgPos || !this.avgOff) {
+      return;
+    }
 
-      var adjHomeOff = Number(leftTeam.oRtg) + Number(leftTeam.oRtg) * adv;
-      var adjHomeDef = Number(leftTeam.dRtg) - Number(leftTeam.dRtg) * adv;
+    const result = this.oddsService.calculateNBAOdds(
+      this.selectedLeftTeam,
+      this.selectedRightTeam,
+      this.avgPos,
+      this.avgOff,
+      this.leftHome || false,
+      this.rightHome || false,
+      this.neutral
+    );
 
-      var adjAwayOff = Number(rightTeam.oRtg) + Number(rightTeam.oRtg) * adv;
-      var adjAwayDef = Number(rightTeam.dRtg) - Number(rightTeam.dRtg) * adv;
-
-      let pythExp = 10.25;
-      let adjHomePyth = Math.pow(adjHomeOff, pythExp) / (Math.pow(adjHomeOff, pythExp) + Math.pow(adjHomeDef, pythExp));
-      let adjAwayPyth = Math.pow(adjAwayOff, pythExp) / (Math.pow(adjAwayOff, pythExp) + Math.pow(adjAwayDef, pythExp));
-
-      let leftWinChance = (adjHomePyth - adjHomePyth * adjAwayPyth) / (adjHomePyth + adjAwayPyth - 2 * adjHomePyth * adjAwayPyth);
-      this.leftWinChance = leftWinChance * 100;
-      this.rightWinChance = (1 - leftWinChance) * 100;
-      this.leftWinChance = this.leftWinChance.toFixed(0);
-      this.rightWinChance = this.rightWinChance.toFixed(0);
-
-      var adjPos = ((rightTeam.pace / this.avgPos) * (leftTeam.pace / this.avgPos)) * this.avgPos;
-
-      let rightScoreDecimal = (((adjAwayOff / this.avgOff) * (adjHomeDef / this.avgOff)) * (this.avgOff) * (adjPos / 100));
-      this.rightScore = Number(rightScoreDecimal.toFixed(0));
-      let leftScoreDecimal = (((adjHomeOff / this.avgOff) * (adjAwayDef / this.avgOff)) * (this.avgOff) * (adjPos / 100));
-
-      if(!this.neutral) {	
-        leftScoreDecimal = leftScoreDecimal + 3.2;	
-      }
-      
-      this.leftScore = Number(leftScoreDecimal.toFixed(0));
-
-      let decSpread = Math.abs(leftScoreDecimal - (rightScoreDecimal));
-
-      if (leftScoreDecimal > rightScoreDecimal) {
-        this.spread = "-" + (Math.round(decSpread * 2) / 2).toFixed(1);
-        this.winner = leftTeam;
-        this.loser = rightTeam;
-        this.confidenceScore = this.leftWinChance;
-      } else {
-        this.spread = "-" + (Math.round(decSpread * 2) / 2).toFixed(1);
-        this.winner = rightTeam;
-        this.loser = leftTeam;
-        this.confidenceScore = this.rightWinChance;
-      }
-
-      if (this.leftHome || this.neutral) {
-        this.leftScore = this.leftScore;
-        this.rightScore = this.rightScore;
-        if (leftScoreDecimal > rightScoreDecimal) {
-          this.leftWinner = true;
-          this.rightWinner = false;
-        } else {
-          this.leftWinner = false;
-          this.rightWinner = true;
-        }
-      } else if (this.rightHome) {
-        this.leftScore = this.rightScore;
-        this.rightScore = this.leftScore;
-        if (leftScoreDecimal > rightScoreDecimal) {
-          this.leftWinner = false;
-          this.rightWinner = true;
-        } else {
-          this.leftWinner = true;
-          this.rightWinner = false;
-        }
-      }
-
-
-      this.overUnder = (rightScoreDecimal + leftScoreDecimal).toFixed(2);
-      this.totalPoints = this.leftScore + this.rightScore;
+    if (result) {
+      this.leftScore = result.leftScore;
+      this.rightScore = result.rightScore;
+      this.leftWinChance = result.leftWinChance;
+      this.rightWinChance = result.rightWinChance;
+      this.spread = result.spread;
+      this.confidenceScore = result.confidenceScore;
+      this.overUnder = result.overUnder;
+      this.totalPoints = result.totalPoints;
+      this.leftWinner = result.leftWinner;
+      this.rightWinner = result.rightWinner;
+      this.winner = result.leftWinner ? this.selectedLeftTeam : this.selectedRightTeam;
     }
   }
 
   getConfidenceClass(confidence: string): string {
-    // Extract numeric value from string like "75%" or "50%"
-    const numericValue = parseFloat(confidence.replace('%', ''));
-    
-    if (numericValue >= 70) {
-      // High confidence - green
-      return 'bg-green-100 text-green-800 border-green-200';
-    } else if (numericValue >= 50) {
-      // Medium confidence - yellow/orange
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    } else {
-      // Low confidence - red
-      return 'bg-red-100 text-red-800 border-red-200';
-    }
+    return this.utilsService.getConfidenceClass(confidence);
   }
 }

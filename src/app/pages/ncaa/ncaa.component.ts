@@ -9,6 +9,58 @@ import { combineLatest } from 'rxjs';
 
 declare var stringSimilarity: any
 
+// Add interfaces for type safety
+interface Team {
+  team: string;
+  School?: string;
+  Conference?: string;
+  GlobalTeamID?: number;
+  TeamLogoUrl?: string;
+  adjO?: number;
+  adjD?: number;
+  adjT?: number;
+  conference?: string;
+  winLoss?: string;
+  Stadium?: {
+    City?: string;
+    State?: string;
+    Name?: string;
+  };
+  homeTeam?: boolean;
+  Wins?: number;
+  Losses?: number;
+  [key: string]: any;
+}
+
+interface Matchup {
+  leftTeam: string;
+  leftRecord: string;
+  leftScore: number;
+  leftSpread: string;
+  rightSpread: string;
+  totalPoints: number;
+  rightScore: number;
+  rightRecord: string;
+  rightTeam: string;
+  confidence: string;
+  location?: {
+    City?: string;
+    State?: string;
+    Name?: string;
+  };
+  gameTime: string;
+  remove?: string;
+  leftTeamLogoUrl?: string;
+  rightTeamLogoUrl?: string;
+}
+
+interface GameSchedule {
+  GlobalHomeTeamID: number;
+  GlobalAwayTeamID: number;
+  DateTime: string;
+  Status: string;
+}
+
 @Component({
     selector: 'app-ncaa',
     imports: [FormsModule, Card, Chip],
@@ -18,149 +70,166 @@ declare var stringSimilarity: any
 })
 export class NCAAComponent implements OnInit {
 
-  allFirestoreTeams: any = []
-  leftTeamsList: any = []
-  rightTeamsList: any = []
+  // Constants
+  private readonly HOME_ADVANTAGE = 0.010;
+  private readonly PYTHAGOREAN_EXPONENT = 10.25;
+  private readonly HOME_SCORE_ADJUSTMENT = 3.2;
+  private readonly HIGH_SIMILARITY_THRESHOLD = 0.70;
+  private readonly LOW_SIMILARITY_THRESHOLD = 0.35;
 
-  avgPos: any | undefined
-  avgOff: any | undefined
+  allFirestoreTeams: Team[] = []
+  leftTeamsList: Team[] = []
+  rightTeamsList: Team[] = []
 
-  leftHome: any | undefined
-  rightHome: any | undefined
-  neutral: any | undefined
+  avgPos: number | undefined
+  avgOff: number | undefined
 
-  leftScore: any | undefined
-  leftWinChance: any | undefined
-  leftWinner: any | undefined
+  leftHome: boolean | undefined
+  rightHome: boolean | undefined
+  neutral: boolean = true
 
-  rightScore: any | undefined
-  rightWinChance: any | undefined
-  rightWinner: any | undefined
+  leftScore: number | undefined
+  leftWinChance: number | undefined
+  leftWinner: boolean | undefined
 
-  spread: any | undefined
-  winner: any | undefined
-  confidenceScore: any | undefined
-  overUnder: any | undefined
-  totalPoints: any | undefined
+  rightScore: number | undefined
+  rightWinChance: number | undefined
+  rightWinner: boolean | undefined
 
-  selectedLeftTeam: any | undefined;
-  selectedRightTeam: any | undefined;
+  spread: string | undefined
+  winner: Team | undefined
+  confidenceScore: number | undefined
+  overUnder: number | undefined
+  totalPoints: number | undefined
 
-  allTeamSeasonStats: any = []
-  allTeams: any = []
-  todaysGames: any = []
+  selectedLeftTeam: Team | undefined;
+  selectedRightTeam: Team | undefined;
 
-  matchups: any[] = [];
+  allTeamSeasonStats: any[] = []
+  allTeams: Team[] = []
+  todaysGames: GameSchedule[] = []
+
+  matchups: Matchup[] = [];
 
   gridApi: any;
   gridColumnApi: any;
 
-  conferenceMap = new Map()
+  conferenceMap = new Map<string, string>()
 
-  constructor(public _dataService: DataService, private confirmationService: ConfirmationService, private messageService: MessageService) {
-
-    this.neutral = true
-    
-    this.conferenceMap.set("American Athletic", "Amer" )
-    this.conferenceMap.set("American", "Amer" )
-    this.conferenceMap.set("Atlantic Coast", "ACC" )
-    this.conferenceMap.set("Big Ten", "B10" )
-    this.conferenceMap.set("Big 12", "B12" )
-    this.conferenceMap.set("Conference USA", "CUSA" )
-    this.conferenceMap.set("Mid-American", "MAC" )
-    this.conferenceMap.set("Mountain West", "MWC" )
-    this.conferenceMap.set("Pac-12", "WCC" )
-    this.conferenceMap.set("Southeastern", "SEC" )
-    this.conferenceMap.set("Sun Belt", "SB" )
-    this.conferenceMap.set("America East",	"AE" )
-    this.conferenceMap.set("Atlantic Sun",	"ASUN" )
-    this.conferenceMap.set("Atlantic 10",	"A-10" )
-    this.conferenceMap.set("Big East",	"BE" )
-    this.conferenceMap.set("Big West", "BW" )
-    this.conferenceMap.set("Coastal Athletic Association",	"CAA" )
-    this.conferenceMap.set("Horizon League",	"Horz" )
-    this.conferenceMap.set("Metro Atlantic Athletic",	"MAAC" )
-    this.conferenceMap.set("Missouri Valley",	"MVC" )
-    this.conferenceMap.set("Mountain Pacific Sports Federation",	"MPSF" )
-    this.conferenceMap.set("Summit",	"Sum" )
-    this.conferenceMap.set("West Coast", "WCC" )
-    this.conferenceMap.set("Western Athletic", "WAC" )
-    this.conferenceMap.set("Southwestern Athletic", "SWAC" )
-    this.conferenceMap.set("Patriot League", "PL" )
-    this.conferenceMap.set("Southland", "Slnd" )
-    this.conferenceMap.set("Mid-Eastern", "MEAC" )
-    this.conferenceMap.set("Northeast", "NEC" )
-    this.conferenceMap.set("Ohio Valley", "OVC" )
-    this.conferenceMap.set("Southern", "SC" )
-    this.conferenceMap.set("Big Sky", "BSky" )
-    this.conferenceMap.set("Big South", "BSth" )
-    this.conferenceMap.set("Ivy League", "Ivy" )
-
-    this.getNCAAData()
+  constructor(
+    public _dataService: DataService, 
+    private confirmationService: ConfirmationService, 
+    private messageService: MessageService
+  ) {
+    this.neutral = true;
+    this.initializeConferenceMap();
+    this.getNCAAData();
   }
 
   ngOnInit() {
   }
 
-  getNCAAData() {
+  private initializeConferenceMap(): void {
+    this.conferenceMap.set("American Athletic", "Amer");
+    this.conferenceMap.set("American", "Amer");
+    this.conferenceMap.set("Atlantic Coast", "ACC");
+    this.conferenceMap.set("Big Ten", "B10");
+    this.conferenceMap.set("Big 12", "B12");
+    this.conferenceMap.set("Conference USA", "CUSA");
+    this.conferenceMap.set("Mid-American", "MAC");
+    this.conferenceMap.set("Mountain West", "MWC");
+    this.conferenceMap.set("Pac-12", "WCC");
+    this.conferenceMap.set("Southeastern", "SEC");
+    this.conferenceMap.set("Sun Belt", "SB");
+    this.conferenceMap.set("America East", "AE");
+    this.conferenceMap.set("Atlantic Sun", "ASUN");
+    this.conferenceMap.set("Atlantic 10", "A-10");
+    this.conferenceMap.set("Big East", "BE");
+    this.conferenceMap.set("Big West", "BW");
+    this.conferenceMap.set("Coastal Athletic Association", "CAA");
+    this.conferenceMap.set("Horizon League", "Horz");
+    this.conferenceMap.set("Metro Atlantic Athletic", "MAAC");
+    this.conferenceMap.set("Missouri Valley", "MVC");
+    this.conferenceMap.set("Mountain Pacific Sports Federation", "MPSF");
+    this.conferenceMap.set("Summit", "Sum");
+    this.conferenceMap.set("West Coast", "WCC");
+    this.conferenceMap.set("Western Athletic", "WAC");
+    this.conferenceMap.set("Southwestern Athletic", "SWAC");
+    this.conferenceMap.set("Patriot League", "PL");
+    this.conferenceMap.set("Southland", "Slnd");
+    this.conferenceMap.set("Mid-Eastern", "MEAC");
+    this.conferenceMap.set("Northeast", "NEC");
+    this.conferenceMap.set("Ohio Valley", "OVC");
+    this.conferenceMap.set("Southern", "SC");
+    this.conferenceMap.set("Big Sky", "BSky");
+    this.conferenceMap.set("Big South", "BSth");
+    this.conferenceMap.set("Ivy League", "Ivy");
+  }
 
+  getNCAAData() {
     combineLatest([
       this._dataService.getNCAAMAnalytics(),
       this._dataService.getAllNCAAMTeamSeasonStats(),
       this._dataService.getNCAAMTeams(),
       this._dataService.getTodaysNCAAMSchedule(),
-    ]).subscribe(([firestoreData, ncaaTeamStatsData, ncaaTeamsData, scheduleData]: any) => {
-      this.allFirestoreTeams = firestoreData
-      this.allTeamSeasonStats = ncaaTeamStatsData;
-      this.allTeams = ncaaTeamsData.sort((a: any, b: any) => a.School.localeCompare(b.School))
-      this.todaysGames = scheduleData;
+    ]).subscribe({
+      next: ([firestoreData, ncaaTeamStatsData, ncaaTeamsData, scheduleData]: any) => {
+        this.allFirestoreTeams = firestoreData;
+        this.allTeamSeasonStats = ncaaTeamStatsData;
+        this.allTeams = ncaaTeamsData.sort((a: Team, b: Team) => 
+          (a.School || '').localeCompare(b.School || '')
+        );
+        this.todaysGames = scheduleData;
 
-      this.calculateAverages()
-      this.calculateTodaysGames()
-
+        this.calculateAverages();
+        this.calculateTodaysGames();
+      },
+      error: (error: any) => {
+        console.error('Error fetching NCAA data:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load NCAA data'
+        });
+      }
     });
   }
 
   calculateAverages() {
+    if (!this.allFirestoreTeams || this.allFirestoreTeams.length === 0) {
+      return;
+    }
+
     let avgPosSum = 0;
     let avgOffSum = 0;
-    for (const key in this.allFirestoreTeams) {
-      let ele = this.allFirestoreTeams[key];
-      if (ele.team != "Team") {
+    let count = 0;
+
+    for (const ele of this.allFirestoreTeams) {
+      if (ele.team !== "Team" && ele.adjT && ele.adjO) {
         avgPosSum += Number(ele.adjT);
         avgOffSum += Number(ele.adjO);
+        count++;
       }
     }
 
-    this.avgPos = avgPosSum / this.allFirestoreTeams.length;
-    this.avgOff = avgOffSum / this.allFirestoreTeams.length;
+    if (count > 0) {
+      this.avgPos = avgPosSum / count;
+      this.avgOff = avgOffSum / count;
+    }
   }
 
   calculateTodaysGames() {
-    // this.gridApi.setRowData([]);
-    let homeTeam: any;
-    let awayTeam: any;
-    let gameTime: any;
-    let todaysMatchups = [];
-    let todaysGames = this.todaysGames.filter((ele: any) => ele.Status !== "Final")
-    for (const key in todaysGames) {
-      let ele = todaysGames[key];
+    this.matchups = [];
+    const todaysGames = this.todaysGames.filter((ele: GameSchedule) => ele.Status !== "Final");
+    const todaysMatchups: Array<[Team, Team, string]> = [];
 
-      // console.log(key)
-      // if(key === "86") {
-      //   console.log(key)
-      // }
+    for (const game of todaysGames) {
+      const homeTeam = this.setSelectedTeam(game.GlobalHomeTeamID);
+      const awayTeam = this.setSelectedTeam(game.GlobalAwayTeamID);
 
-      let homeTeam = this.setSelectedTeam(ele.GlobalHomeTeamID)
-      let awayTeam = this.setSelectedTeam(ele.GlobalAwayTeamID)
-
-      // if(homeTeam.School === "Stanford" || awayTeam.School === "Stanford") {
-      //   console.log("here")
-      // }
-
-      if(homeTeam && awayTeam) {
-        gameTime = new Date(ele.DateTime).toLocaleTimeString();
-        todaysMatchups.push([homeTeam, awayTeam, gameTime])
+      if (homeTeam && awayTeam) {
+        const gameTime = new Date(game.DateTime).toLocaleTimeString();
+        todaysMatchups.push([homeTeam, awayTeam, gameTime]);
       }
     }
 
@@ -174,190 +243,236 @@ export class NCAAComponent implements OnInit {
       }
     }
     
+    // Reset state
     this.leftWinner = false;
     this.rightWinner = false;
     this.spread = '';
-    this.confidenceScore = '';
+    this.confidenceScore = undefined;
   }
 
-  addMatchup(gameTime: any) {
-    if(!this.selectedLeftTeam || !this.selectedRightTeam)  return
-    var matchup = {
+  addMatchup(gameTime: string) {
+    if (!this.selectedLeftTeam || !this.selectedRightTeam) {
+      return;
+    }
+
+    const matchup: Matchup = {
       "leftTeam": this.selectedLeftTeam.team,
-      "leftRecord": this.selectedLeftTeam.winLoss,
-      "leftScore": this.leftScore,
+      "leftRecord": this.selectedLeftTeam.winLoss || '',
+      "leftScore": this.leftScore || 0,
       "leftSpread": "",
       "rightSpread": "",
-      "totalPoints": this.totalPoints,
-      "rightScore": this.rightScore,
-      "rightRecord": this.selectedRightTeam.winLoss,
+      "totalPoints": this.totalPoints || 0,
+      "rightScore": this.rightScore || 0,
+      "rightRecord": this.selectedRightTeam.winLoss || '',
       "rightTeam": this.selectedRightTeam.team,
-      "confidence": this.confidenceScore + "%",
-      "location": this.selectedLeftTeam.homeTeam ? this.selectedLeftTeam.Stadium : this.selectedRightTeam.Stadium,
-      "gameTime": "User Generated",
+      "confidence": (this.confidenceScore || 0) + "%",
+      "location": this.selectedLeftTeam.homeTeam 
+        ? this.selectedLeftTeam.Stadium 
+        : this.selectedRightTeam.Stadium,
+      "gameTime": gameTime || "User Generated",
       "remove": "",
       "leftTeamLogoUrl": this.selectedLeftTeam.TeamLogoUrl,
       "rightTeamLogoUrl": this.selectedRightTeam.TeamLogoUrl
     };
-    if(matchup.leftScore > matchup.rightScore) {
-      matchup.leftSpread = this.spread,
-      matchup.rightSpread = this.spread.replace("-","+")
+
+    // Calculate spreads
+    if (matchup.leftScore > matchup.rightScore) {
+      matchup.leftSpread = this.spread || "";
+      matchup.rightSpread = (this.spread || "").replace("-", "+");
     } else {
-      matchup.rightSpread = this.spread,
-      matchup.leftSpread = this.spread.replace("-","+")
+      matchup.rightSpread = this.spread || "";
+      matchup.leftSpread = (this.spread || "").replace("-", "+");
     }
 
-    if(gameTime) {
-      matchup.gameTime = gameTime;
-    }
-    this.matchups.push(matchup)
+    this.matchups.push(matchup);
   }
 
-  setSelectedTeam(id: any) {
-    let team: any;
-    let temp1 = this.allTeams.filter((team: any) => team.GlobalTeamID === id)[0]
-    let temp2: any
-    if(temp1) {
-      temp2 = this.allFirestoreTeams.filter((tm: any) => tm.team.toLowerCase().includes(temp1.School.toLowerCase()))
+  setSelectedTeam(id: number): Team | null {
+    const teamData = this.allTeams.find((team: Team) => team.GlobalTeamID === id);
+    
+    if (!teamData) {
+      return null;
+    }
+
+    let firestoreTeam: Team | undefined;
+    const matchingTeams = this.allFirestoreTeams.filter((tm: Team) => 
+      tm.team.toLowerCase().includes(teamData.School?.toLowerCase() || '')
+    );
+    
+    if (matchingTeams.length === 1) {
+      firestoreTeam = matchingTeams[0];
+    } else if (matchingTeams.length > 1) {
+      // Try to match by conference and wins
+      const conferenceCode = this.conferenceMap.get(teamData.Conference || '');
+      const teamWins = teamData.Wins?.toString();
       
-      // if(temp1.School.includes("Michigan")) {
-      //   console.log("here")
-      // }
-      if(temp2 && temp2.length === 1) {
-        team = {
-          ...temp1,
-          ...temp2[0]
+      firestoreTeam = matchingTeams.find((tm: Team) => 
+        tm.conference === conferenceCode && 
+        tm.winLoss?.split("-")[0] === teamWins
+      );
+    }
+
+    // If still no match, try fuzzy matching
+    if (!firestoreTeam && teamData.School) {
+      firestoreTeam = this.findTeamByFuzzyMatch(teamData);
+    }
+
+    if (firestoreTeam) {
+      const team: Team = {
+        ...teamData,
+        ...firestoreTeam,
+        homeTeam: true
+      };
+      return team;
+    }
+
+    return null;
+  }
+
+  private findTeamByFuzzyMatch(teamData: Team): Team | undefined {
+    if (!teamData.School || !teamData.Conference) {
+      return undefined;
+    }
+
+    let schoolName = teamData.School.replace("College", '').trim();
+    schoolName = schoolName.replace("University", '').trim();
+    const schoolRecord = `${teamData.Wins}-${teamData.Losses}`;
+    const conferenceCode = this.conferenceMap.get(teamData.Conference);
+
+    if (!conferenceCode) {
+      return undefined;
+    }
+
+    // Special cases
+    if (schoolName === "UIC") {
+      return this.allFirestoreTeams.find((t: Team) => t.team.includes("Illinois Chicago"));
+    }
+    if (schoolName === "UAPB") {
+      return this.allFirestoreTeams.find((t: Team) => t.team.includes("Arkansas Pine Bluff"));
+    }
+
+    // Fuzzy matching
+    for (const tm of this.allFirestoreTeams) {
+      const similarity = stringSimilarity.compareTwoStrings(schoolName, tm.team);
+      
+      if (tm.conference?.toLowerCase() === conferenceCode.toLowerCase()) {
+        if (similarity > this.HIGH_SIMILARITY_THRESHOLD) {
+          return tm;
         }
-      } else if(temp2 && temp2.length > 1) {
-        let temp3 = temp2.filter((tm: any) => tm.conference === this.conferenceMap.get(temp1.Conference) && tm.winLoss.split("-")[0] == temp1.Wins)[0]
-        team = {
-          ...temp1,
-          ...temp3
-        }
-      } else {
-        let schoolName = temp1.School.replace("College", '').trim()
-        schoolName = schoolName.replace("University", '').trim()
-        let schoolRecord = `${temp1.Wins}-${temp1.Losses}`
-        this.allFirestoreTeams.filter((tm: any) => {
-          if(temp1.Conference != null && temp1.Conference != undefined && stringSimilarity.compareTwoStrings(schoolName, tm.team) > .70 && this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase()) {
-            temp2 = tm
-          } else if (temp1.Conference != null && temp1.Conference != undefined &&
-            stringSimilarity.compareTwoStrings(schoolName, tm.team) > 0.35 &&
-            this.conferenceMap.get(temp1.Conference).toLowerCase() === tm.conference.toLowerCase() &&
-            schoolRecord === tm.winLoss
-          ) {
-            temp2 = tm;
-          } else if(schoolName === "UIC") {
-            temp2 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Illinois Chicago"))[0]
-          } else if(schoolName === "UAPB") {
-            temp2 = this.allFirestoreTeams.filter((t: any) => t.team.includes("Arkansas Pine Bluff"))[0]
-          }
-        })
-        team = {
-          ...temp1,
-          ...temp2
-        }
-        if(team.School.includes("Michigan")) {
-          console.log("here")
+        if (similarity > this.LOW_SIMILARITY_THRESHOLD && tm.winLoss === schoolRecord) {
+          return tm;
         }
       }
     }
-    team.homeTeam = true
-    return team
+
+    return undefined;
   }
 
   calculateOdds() {
-    if (this.selectedLeftTeam && this.selectedRightTeam) {
-      let rightTeam: any, leftTeam: any
-      let adv = .010;
-      if (this.leftHome || this.neutral) {
-        leftTeam = this.selectedLeftTeam;
-        rightTeam = this.selectedRightTeam;
-      } else if (this.rightHome) {
-        leftTeam = this.selectedRightTeam;
-        rightTeam = this.selectedLeftTeam;
-      }
-
-      let adjHomeOff = Number(leftTeam.adjO)
-      let adjHomeDef = Number(leftTeam.adjD)
-
-      let adjAwayOff = Number(rightTeam.adjO)
-      let adjAwayDef = Number(rightTeam.adjD)
-
-      let pythExp = 10.25;
-      let adjHomePyth = Math.pow(adjHomeOff, pythExp) / (Math.pow(adjHomeOff, pythExp) + Math.pow(adjHomeDef, pythExp));
-      let adjAwayPyth = Math.pow(adjAwayOff, pythExp) / (Math.pow(adjAwayOff, pythExp) + Math.pow(adjAwayDef, pythExp));
-
-      let leftWinChance = (adjHomePyth - adjHomePyth * adjAwayPyth) / (adjHomePyth + adjAwayPyth - 2 * adjHomePyth * adjAwayPyth);
-      this.leftWinChance = leftWinChance * 100;
-      this.rightWinChance = (1 - leftWinChance) * 100;
-      this.leftWinChance = this.leftWinChance.toFixed(0);
-      this.rightWinChance = this.rightWinChance.toFixed(0);
-
-      let adjPos = ((rightTeam.adjT / this.avgPos) * (leftTeam.adjT / this.avgPos)) * this.avgPos;
-
-      let rightScoreDecimal = (((adjAwayOff / this.avgOff) * (adjHomeDef / this.avgOff)) * (this.avgOff) * (adjPos / 100));
-      this.rightScore = Number(rightScoreDecimal.toFixed(0));
-      let leftScoreDecimal = (((adjHomeOff / this.avgOff) * (adjAwayDef / this.avgOff)) * (this.avgOff) * (adjPos / 100));
-
-      if(!this.neutral) {	
-        leftScoreDecimal = leftScoreDecimal + 3.2;	
-      }
-      
-      this.leftScore = Number(leftScoreDecimal.toFixed(0));
-
-      let decSpread = Math.abs(leftScoreDecimal - (rightScoreDecimal));
-
-      if (leftScoreDecimal > rightScoreDecimal) {
-        this.spread = "-" + (Math.round(decSpread * 2) / 2).toFixed(1);
-        this.winner = leftTeam;
-        this.confidenceScore = this.leftWinChance;
-      } else {
-        this.spread = "-" + (Math.round(decSpread * 2) / 2).toFixed(1);
-        this.winner = rightTeam;
-        this.confidenceScore = this.rightWinChance;
-      }
-
-      if (this.leftHome || this.neutral) {
-        this.leftScore = this.leftScore;
-        this.rightScore = this.rightScore;
-        if (leftScoreDecimal > rightScoreDecimal) {
-          this.leftWinner = true;
-          this.rightWinner = false;
-        } else {
-          this.leftWinner = false;
-          this.rightWinner = true;
-        }
-      } else if (this.rightHome) {
-        this.leftScore = this.rightScore;
-        this.rightScore = this.leftScore;
-        if (leftScoreDecimal > rightScoreDecimal) {
-          this.leftWinner = false;
-          this.rightWinner = true;
-        } else {
-          this.leftWinner = true;
-          this.rightWinner = false;
-        }
-      }
-
-
-      this.overUnder = (rightScoreDecimal + leftScoreDecimal).toFixed(2);
-      this.totalPoints = this.leftScore + this.rightScore;
+    if (!this.selectedLeftTeam || !this.selectedRightTeam) {
+      return;
     }
+
+    if (!this.avgPos || !this.avgOff) {
+      console.warn('Averages not calculated yet');
+      return;
+    }
+
+    let rightTeam: Team, leftTeam: Team;
+    
+    // Determine home/away teams
+    if (this.leftHome || this.neutral) {
+      leftTeam = this.selectedLeftTeam;
+      rightTeam = this.selectedRightTeam;
+    } else if (this.rightHome) {
+      leftTeam = this.selectedRightTeam;
+      rightTeam = this.selectedLeftTeam;
+    } else {
+      leftTeam = this.selectedLeftTeam;
+      rightTeam = this.selectedRightTeam;
+    }
+
+    // Validate required stats
+    if (!leftTeam.adjO || !leftTeam.adjD || !rightTeam.adjO || !rightTeam.adjD) {
+      console.warn('Missing required team statistics');
+      return;
+    }
+
+    const adjHomeOff = Number(leftTeam.adjO);
+    const adjHomeDef = Number(leftTeam.adjD);
+    const adjAwayOff = Number(rightTeam.adjO);
+    const adjAwayDef = Number(rightTeam.adjD);
+
+    // Calculate win probabilities
+    const pythExp = this.PYTHAGOREAN_EXPONENT;
+    const adjHomePyth = Math.pow(adjHomeOff, pythExp) / 
+      (Math.pow(adjHomeOff, pythExp) + Math.pow(adjHomeDef, pythExp));
+    const adjAwayPyth = Math.pow(adjAwayOff, pythExp) / 
+      (Math.pow(adjAwayOff, pythExp) + Math.pow(adjAwayDef, pythExp));
+
+    const leftWinChance = (adjHomePyth - adjHomePyth * adjAwayPyth) / 
+      (adjHomePyth + adjAwayPyth - 2 * adjHomePyth * adjAwayPyth);
+    
+    this.leftWinChance = Number((leftWinChance * 100).toFixed(0));
+    this.rightWinChance = Number(((1 - leftWinChance) * 100).toFixed(0));
+
+    // Calculate scores
+    const adjPos = ((rightTeam.adjT || 0) / this.avgPos) * 
+      ((leftTeam.adjT || 0) / this.avgPos) * this.avgPos;
+
+    let rightScoreDecimal = (((adjAwayOff / this.avgOff) * (adjHomeDef / this.avgOff)) * 
+      this.avgOff * (adjPos / 100));
+    this.rightScore = Number(rightScoreDecimal.toFixed(0));
+    
+    let leftScoreDecimal = (((adjHomeOff / this.avgOff) * (adjAwayDef / this.avgOff)) * 
+      this.avgOff * (adjPos / 100));
+
+    if (!this.neutral) {
+      leftScoreDecimal = leftScoreDecimal + this.HOME_SCORE_ADJUSTMENT;
+    }
+    
+    this.leftScore = Number(leftScoreDecimal.toFixed(0));
+
+    // Calculate spread - FIXED BUG
+    const decSpread = Math.abs(leftScoreDecimal - rightScoreDecimal);
+    const spreadValue = (Math.round(decSpread * 2) / 2).toFixed(1);
+
+    if (leftScoreDecimal > rightScoreDecimal) {
+      this.spread = "-" + spreadValue;
+      this.winner = leftTeam;
+      this.confidenceScore = this.leftWinChance;
+    } else {
+      this.spread = "-" + spreadValue;
+      this.winner = rightTeam;
+      this.confidenceScore = this.rightWinChance;
+    }
+
+    // Set winner flags and scores - FIXED BUG
+    if (this.leftHome || this.neutral) {
+      this.leftWinner = leftScoreDecimal > rightScoreDecimal;
+      this.rightWinner = !this.leftWinner;
+    } else if (this.rightHome) {
+      // Swap scores correctly
+      const tempLeftScore = this.leftScore;
+      this.leftScore = this.rightScore;
+      this.rightScore = tempLeftScore;
+      
+      this.leftWinner = rightScoreDecimal > leftScoreDecimal;
+      this.rightWinner = !this.leftWinner;
+    }
+
+    this.overUnder = Number((rightScoreDecimal + leftScoreDecimal).toFixed(2));
+    this.totalPoints = (this.leftScore || 0) + (this.rightScore || 0);
   }
 
   getConfidenceClass(confidence: string): string {
-    // Extract numeric value from string like "75%" or "50%"
     const numericValue = parseFloat(confidence.replace('%', ''));
     
     if (numericValue >= 70) {
-      // High confidence - green
       return 'bg-green-100 text-green-800 border-green-200';
     } else if (numericValue >= 50) {
-      // Medium confidence - yellow/orange
       return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     } else {
-      // Low confidence - red
       return 'bg-red-100 text-red-800 border-red-200';
     }
   }

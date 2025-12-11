@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, Injector, WritableSignal, inject, signal } from '@angular/core';
 import { Firestore, collectionData, collection } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 @Injectable({
@@ -11,8 +11,11 @@ export class DataService {
   private _http: HttpClient;
   firestore: Firestore = inject(Firestore);
 
-  // isNCAAActive = true;
-  isNCAAActive: WritableSignal<boolean> = signal(true)
+  // API Key should be moved to environment variables
+  private readonly SPORTSDATA_API_KEY = "0454641805084287b986922e21b0b81f";
+  private readonly SPORTSDATA_BASE_URL = "https://api.sportsdata.io/v3";
+
+  isNCAAActive: WritableSignal<boolean> = signal(true);
   isNCAAActive$ = toObservable(this.isNCAAActive);
 
   constructor(public injector: Injector) { 
@@ -20,68 +23,85 @@ export class DataService {
   }
 
   getNBAAnalytics(): Observable<any> {
-    const itemCollection = collection(this.firestore, 'nba-teams')
-    return collectionData(itemCollection);
+    const itemCollection = collection(this.firestore, 'nba-teams');
+    return collectionData(itemCollection).pipe(
+      catchError(error => {
+        console.error('Error fetching NBA analytics:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getNBATeams(): Observable<any> {
-    return this.getWithKey("https://api.sportsdata.io/v3/nba/scores/json/teams", "0454641805084287b986922e21b0b81f");
+    return this.getWithKey(`${this.SPORTSDATA_BASE_URL}/nba/scores/json/teams`);
   }
 
-  getTodaysNBASchedule() {
-    let today = new Date().toDateString().split(' ');
-    let date = today[3] + '-' + today[1].toUpperCase() + '-' + today[2]
-    return this.getWithKey("https://api.sportsdata.io/v3/nba/scores/json/GamesByDate/" + date, "0454641805084287b986922e21b0b81f");
+  getTodaysNBASchedule(): Observable<any> {
+    const date = this.formatDateForAPI(new Date());
+    return this.getWithKey(`${this.SPORTSDATA_BASE_URL}/nba/scores/json/GamesByDate/${date}`);
   }
 
-  getAllNBAInjuries() {
-    return this.getWithKey("https://api.sportsdata.io/v3/nba/projections/json/InjuredPlayers", "0454641805084287b986922e21b0b81f");
+  getAllNBAInjuries(): Observable<any> {
+    return this.getWithKey(`${this.SPORTSDATA_BASE_URL}/nba/projections/json/InjuredPlayers`);
   }
 
   getNCAAMAnalytics(): Observable<any> {
-    const itemCollection = collection(this.firestore, 'college-teams')
-    return collectionData(itemCollection);
+    const itemCollection = collection(this.firestore, 'college-teams');
+    return collectionData(itemCollection).pipe(
+      catchError(error => {
+        console.error('Error fetching NCAA analytics:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getNCAAMTeams(): Observable<any> {
-    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/teams", "0454641805084287b986922e21b0b81f");
+    return this.getWithKey(`${this.SPORTSDATA_BASE_URL}/cbb/scores/json/teams`);
   }
 
-  getTodaysNCAAMSchedule() {
-    let today = new Date().toDateString().split(' ');
-    let date = today[3] + '-' + today[1].toUpperCase() + '-' + today[2]
-    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/GamesByDate/" + date, "0454641805084287b986922e21b0b81f");
+  getTodaysNCAAMSchedule(): Observable<any> {
+    const date = this.formatDateForAPI(new Date());
+    return this.getWithKey(`${this.SPORTSDATA_BASE_URL}/cbb/scores/json/GamesByDate/${date}`);
   }
 
-  getAllNCAAMInjuries() {
-    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/InjuredPlayers", "0454641805084287b986922e21b0b81f");
+  getAllNCAAMInjuries(): Observable<any> {
+    return this.getWithKey(`${this.SPORTSDATA_BASE_URL}/cbb/scores/json/InjuredPlayers`);
   }
 
-  getAllNCAAMTeamSeasonStats() {
-    let year = 2024
-    return this.getWithKey("https://api.sportsdata.io/v3/cbb/scores/json/TeamSeasonStats/" + year, "0454641805084287b986922e21b0b81f");
-  }
-  
-
-
-
-  protected getWithKey(cmd: string, key: any) {
-    // let headers = new HttpHeaders();
-    // headers = headers.append("x-rapidapi-key", "e2f8226b79af2bdcd066e64fda2999ef");
-    // headers = headers.append("x-rapidapi-host", "v1.basketball.api-sports.io");
-    // headers = headers.append("Ocp-Apim-Subscription-Key", key);
-    // headers = headers.append("Authorization", key);
-    
-    //console.log(cmd)
-    // return this._http.get(cmd, {headers});
-    return this._http.get(cmd + "?key=" + key);
+  getAllNCAAMTeamSeasonStats(year: number = new Date().getFullYear()): Observable<any> {
+    return this.getWithKey(`${this.SPORTSDATA_BASE_URL}/cbb/scores/json/TeamSeasonStats/${year}`);
   }
 
-  protected getwithAuth(cmd: string, key: any) {
-    let headers = new HttpHeaders();
-    headers = headers.append("Authorization", key);
-    
-    //console.log(cmd)
-    return this._http.get(cmd, { headers });
+  /**
+   * Format date for SportsData API (YYYY-MMM-DD format)
+   */
+  private formatDateForAPI(date: Date): string {
+    const dateParts = date.toDateString().split(' ');
+    return `${dateParts[3]}-${dateParts[1].toUpperCase()}-${dateParts[2]}`;
+  }
+
+  /**
+   * Make API request with API key
+   */
+  protected getWithKey(url: string): Observable<any> {
+    return this._http.get(`${url}?key=${this.SPORTSDATA_API_KEY}`).pipe(
+      catchError(error => {
+        console.error(`Error fetching from ${url}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Make API request with Authorization header
+   */
+  protected getWithAuth(url: string, authKey: string): Observable<any> {
+    const headers = new HttpHeaders().append("Authorization", authKey);
+    return this._http.get(url, { headers }).pipe(
+      catchError(error => {
+        console.error(`Error fetching from ${url}:`, error);
+        return throwError(() => error);
+      })
+    );
   }
 }
