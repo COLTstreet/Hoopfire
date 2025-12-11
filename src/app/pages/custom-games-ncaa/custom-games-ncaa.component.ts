@@ -11,12 +11,13 @@ import { ToastModule } from 'primeng/toast';
 import { Select, SelectModule } from 'primeng/select';
 
 import * as XLSX from 'xlsx';
+import { Chip } from 'primeng/chip';
 
 declare var stringSimilarity: any
 
 @Component({
     selector: 'app-custom-games-ncaa',
-    imports: [SelectModule, FormsModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule, Select],
+    imports: [SelectModule, FormsModule, AgGridAngular, ButtonModule, TooltipModule, ConfirmDialogModule, ToastModule, Select, Chip],
     templateUrl: './custom-games-ncaa.component.html',
     styleUrl: './custom-games-ncaa.component.scss',
     providers: [ConfirmationService, MessageService]
@@ -373,6 +374,22 @@ export class CustomGamesNcaaComponent {
 
       this.overUnder = (rightScoreDecimal + leftScoreDecimal).toFixed(2);
       this.totalPoints = this.leftScore + this.rightScore;
+    }
+  }
+
+  getConfidenceClass(confidence: string): string {
+    // Extract numeric value from string like "75%" or "50%"
+    const numericValue = parseFloat(confidence.replace('%', ''));
+    
+    if (numericValue >= 70) {
+      // High confidence - green
+      return 'bg-green-100 text-green-800 border-green-200';
+    } else if (numericValue >= 50) {
+      // Medium confidence - yellow/orange
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    } else {
+      // Low confidence - red
+      return 'bg-red-100 text-red-800 border-red-200';
     }
   }
   

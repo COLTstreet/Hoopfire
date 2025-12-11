@@ -1,49 +1,85 @@
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2 mt-4">
+<!-- Enhanced version with better visual hierarchy -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 mt-4">
     @for(matchup of matchups; track matchup; let i = $index) {
-    <p-card class="h-full" [style]="{'background': 'white'}">
-        <div class="text-center font-bold text-black">{{matchup.gameTime}} ET</div>
-        <div class="flex flex-row">
+    <p-card class="h-full shadow-md hover:shadow-lg transition-shadow" 
+            [style]="{'background': 'white', 'border': '1px solid #e5e7eb'}">
+        <!-- Game time header -->
+        <div class="text-center font-semibold text-gray-600 text-sm mb-3 pb-2 border-b">
+            {{matchup.gameTime}} ET
+        </div>
+        
+        <div class="flex flex-row gap-2">
+            <!-- Left Team -->
             <div class="basis-5/12 flex flex-col text-black">
                 <div class="flex justify-center items-center">
-                    <img loading="lazy" src="{{matchup.leftWikipediaLogoUrl}}" class="w-16 h-16" />
+                    <img loading="lazy" 
+                         [src]="matchup.leftWikipediaLogoUrl" 
+                         [alt]="matchup.leftTeam + ' logo'"
+                         class="w-16 h-16" />
                 </div>
-                <div class="flex justify-center items-center mt-2 text-sm">
+                <div class="flex justify-center items-center mt-2 text-xs text-gray-500">
                     ({{matchup.leftRecord}})
                 </div>
-                <div class="flex justify-center items-center text-lg">
+                <div class="flex justify-center items-center text-base font-semibold">
                     {{matchup.leftTeam}}
                 </div>
-                <div class="flex justify-center items-center mt-2 text-3xl">
+                <!-- Show spread if available -->
+                <div class="flex justify-center items-center text-xs text-gray-400 mt-1">
+                    {{matchup.leftSpread}}
+                </div>
+                <div class="flex justify-center items-center mt-2 text-3xl font-bold"
+                     [class.text-green-600]="matchup.leftScore > matchup.rightScore">
                     {{matchup.leftScore}}
                 </div>
             </div>
-            <div class="basis-1/6 flex flex-col">
-                <div class="flex flex-col h-full justify-center items-center">
-                    <p-chip>
-                        <span>Total:</span>
-                        <span>{{matchup.totalPoints}}</span>
+            
+            <!-- Center Info -->
+            <div class="basis-1/6 flex flex-col justify-center items-center gap-2">
+                <div class="text-center">
+                    <p class="text-xs text-gray-500 mb-1">Total</p>
+                    <p-chip class="text-sm font-semibold">
+                        {{matchup.totalPoints}}
                     </p-chip>
-                    <p-chip class="mt-2">
-                        <span>Confidence:</span>
-                        <span>{{matchup.confidence}}</span>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs text-gray-500 mb-1">Confidence</p>
+                    <p-chip [class]="getConfidenceClass(matchup.confidence)">
+                        {{matchup.confidence}}
                     </p-chip>
                 </div>
             </div>
+            
+            <!-- Right Team -->
             <div class="basis-5/12 flex flex-col text-black">
                 <div class="flex justify-center items-center">
-                    <img loading="lazy" src="{{matchup.rightWikipediaLogoUrl}}" class="w-16 h-16" />
+                    <img loading="lazy" 
+                         [src]="matchup.rightWikipediaLogoUrl" 
+                         [alt]="matchup.rightTeam + ' logo'"
+                         class="w-16 h-16" />
                 </div>
-                <div class="flex justify-center items-center mt-2 text-sm">
+                <div class="flex justify-center items-center mt-2 text-xs text-gray-500">
                     ({{matchup.rightRecord}})
                 </div>
-                <div class="flex justify-center items-center text-lg">
+                <div class="flex justify-center items-center text-base font-semibold">
                     {{matchup.rightTeam}}
                 </div>
-                <div class="flex justify-center items-center mt-2 text-3xl">
+                <!-- Show spread if available -->
+                <div class="flex justify-center items-center text-xs text-gray-400 mt-1">
+                    {{matchup.rightSpread}}
+                </div>
+                <div class="flex justify-center items-center mt-2 text-3xl font-bold"
+                     [class.text-green-600]="matchup.rightScore > matchup.leftScore">
                     {{matchup.rightScore}}
                 </div>
             </div>
         </div>
     </p-card>
+    }
+    
+    <!-- Empty state -->
+    @if (matchups.length === 0) {
+    <div class="col-span-full text-center py-12">
+        <p class="text-gray-500 text-lg">No games scheduled for today</p>
+    </div>
     }
 </div>

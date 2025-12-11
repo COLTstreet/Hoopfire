@@ -245,4 +245,20 @@ export class NbaComponent {
       this.totalPoints = this.leftScore + this.rightScore;
     }
   }
+
+  getConfidenceClass(confidence: string): string {
+    // Extract numeric value from string like "75%" or "50%"
+    const numericValue = parseFloat(confidence.replace('%', ''));
+    
+    if (numericValue >= 70) {
+      // High confidence - green
+      return 'bg-green-100 text-green-800 border-green-200';
+    } else if (numericValue >= 50) {
+      // Medium confidence - yellow/orange
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    } else {
+      // Low confidence - red
+      return 'bg-red-100 text-red-800 border-red-200';
+    }
+  }
 }
