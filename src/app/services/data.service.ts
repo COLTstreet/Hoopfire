@@ -32,6 +32,16 @@ export class DataService {
     );
   }
 
+  getNBAMStats(): Observable<any> {
+    const itemCollection = collection(this.firestore, 'nba-predictions-2026');
+    return collectionData(itemCollection).pipe(
+      catchError(error => {
+        console.error('Error fetching NBA stats:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   getNBATeams(): Observable<any> {
     return this.getWithKey(`${this.SPORTSDATA_BASE_URL}/nba/scores/json/teams`);
   }
@@ -50,6 +60,16 @@ export class DataService {
     return collectionData(itemCollection).pipe(
       catchError(error => {
         console.error('Error fetching NCAA analytics:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  getNCAAMStats(): Observable<any> {
+    const itemCollection = collection(this.firestore, 'college-predictions-2026');
+    return collectionData(itemCollection).pipe(
+      catchError(error => {
+        console.error('Error fetching NCAA stats:', error);
         return throwError(() => error);
       })
     );

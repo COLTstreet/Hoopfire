@@ -16,6 +16,7 @@ export interface Matchup {
   rightWikipediaLogoUrl?: string;
   leftTeamLogoUrl?: string;
   rightTeamLogoUrl?: string;
+  isFinished?: boolean;
   location?: {
     City?: string;
     State?: string;

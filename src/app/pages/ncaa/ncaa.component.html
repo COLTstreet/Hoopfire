@@ -1,8 +1,8 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 mt-4">
-    @for(matchup of matchups; track matchup; let i = $index) {
+    @for(matchup of allMatchups; track matchup; let i = $index) {
     <p-card class="h-full shadow-md hover:shadow-lg transition-shadow"
-        [style]="{'background': 'white', 'border': '1px solid #e5e7eb'}">
-        <!-- Location and Game Time Header -->
+        [style]="{'background': matchup.isFinished ? '#f9fafb' : 'white', 'border': matchup.isFinished ? '2px solid #10b981' : '1px solid #e5e7eb', 'opacity': matchup.isFinished ? '0.95' : '1'}">
+        <!-- Location and Game Time Header with Final badge -->
         <div class="flex flex-col justify-center items-center mb-3 pb-2 border-b">
             @if(matchup.location) {
             <div class="text-xs text-gray-500 mb-1">
@@ -12,8 +12,11 @@
                 {{matchup.location.Name}}
             </div>
             }
-            <div class="text-center font-semibold text-gray-600 text-sm">
-                {{matchup.gameTime}} ET
+            <div class="text-center font-semibold text-gray-600 text-sm flex items-center justify-center gap-2">
+                @if (matchup.isFinished) {
+                    <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">FINAL</span>
+                }
+                <span>{{matchup.gameTime}} ET</span>
             </div>
         </div>
 
@@ -35,7 +38,8 @@
                     {{matchup.leftSpread}}
                 </div>
                 <div class="flex justify-center items-center mt-2 text-3xl font-bold"
-                    [class.text-green-600]="matchup.leftScore > matchup.rightScore">
+                    [class.text-green-600]="matchup.leftScore > matchup.rightScore"
+                    [class.text-gray-400]="matchup.isFinished && matchup.leftScore <= matchup.rightScore">
                     {{matchup.leftScore}}
                 </div>
             </div>
@@ -49,8 +53,8 @@
                     </p-chip>
                 </div>
                 <div class="text-center">
-                    <p class="text-xs text-gray-500 mb-1">Confidence</p>
-                    <p-chip [class]="getConfidenceClass(matchup.confidence)">
+                    <p class="text-xs text-gray-500 mb-1">@if (!matchup.isFinished) { Confidence } @else { Status }</p>
+                    <p-chip [class]="matchup.isFinished ? 'bg-green-100 text-green-800 border-green-200' : getConfidenceClass(matchup.confidence)">
                         {{matchup.confidence}}
                     </p-chip>
                 </div>
@@ -73,7 +77,8 @@
                     {{matchup.rightSpread}}
                 </div>
                 <div class="flex justify-center items-center mt-2 text-3xl font-bold"
-                    [class.text-green-600]="matchup.rightScore > matchup.leftScore">
+                    [class.text-green-600]="matchup.rightScore > matchup.leftScore"
+                    [class.text-gray-400]="matchup.isFinished && matchup.rightScore <= matchup.leftScore">
                     {{matchup.rightScore}}
                 </div>
             </div>
@@ -82,7 +87,7 @@
     }
 
     <!-- Empty state -->
-    @if (matchups.length === 0) {
+    @if (allMatchups.length === 0) {
     <div class="col-span-full text-center py-12">
         <p class="text-gray-500 text-lg">No games scheduled for today</p>
     </div>

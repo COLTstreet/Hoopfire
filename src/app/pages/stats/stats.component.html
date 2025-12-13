@@ -1,0 +1,104 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-white mb-8 text-center">Prediction Statistics</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+    <!-- NCAA Stats Card -->
+    <p-card class="shadow-lg">
+      <div class="text-center">
+        <h2 class="text-2xl font-bold text-white mb-6">NCAA Basketball</h2>
+        
+        @if (ncaaRecord) {
+          <div class="space-y-4">
+            <div class="flex justify-between items-center p-4 bg-green-50 rounded-lg">
+              <span class="text-lg font-semibold text-gray-700">Wins:</span>
+              <span class="text-2xl font-bold text-green-600">{{ncaaRecord.wins}}</span>
+            </div>
+            
+            <div class="flex justify-between items-center p-4 bg-red-50 rounded-lg">
+              <span class="text-lg font-semibold text-gray-700">Losses:</span>
+              <span class="text-2xl font-bold text-red-600">{{ncaaRecord.losses}}</span>
+            </div>
+            
+            <div class="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+              <span class="text-lg font-semibold text-gray-700">Total Games:</span>
+              <span class="text-2xl font-bold text-blue-600">{{getTotalGames(ncaaRecord.wins, ncaaRecord.losses)}}</span>
+            </div>
+            
+            <div class="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
+              <span class="text-lg font-semibold text-gray-700">Win Percentage:</span>
+              <span class="text-2xl font-bold text-purple-600">{{getWinPercentage(ncaaRecord.wins, ncaaRecord.losses)}}%</span>
+            </div>
+          </div>
+        } @else {
+          <p class="text-gray-500">Loading...</p>
+        }
+      </div>
+    </p-card>
+
+    <!-- NBA Stats Card -->
+    <p-card class="shadow-lg">
+      <div class="text-center">
+        <h2 class="text-2xl font-bold text-white mb-6">NBA</h2>
+        
+        @if (nbaRecord) {
+          <div class="space-y-4">
+            <div class="flex justify-between items-center p-4 bg-green-50 rounded-lg">
+              <span class="text-lg font-semibold text-gray-700">Wins:</span>
+              <span class="text-2xl font-bold text-green-600">{{nbaRecord.wins}}</span>
+            </div>
+            
+            <div class="flex justify-between items-center p-4 bg-red-50 rounded-lg">
+              <span class="text-lg font-semibold text-gray-700">Losses:</span>
+              <span class="text-2xl font-bold text-red-600">{{nbaRecord.losses}}</span>
+            </div>
+            
+            <div class="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+              <span class="text-lg font-semibold text-gray-700">Total Games:</span>
+              <span class="text-2xl font-bold text-blue-600">{{getTotalGames(nbaRecord.wins, nbaRecord.losses)}}</span>
+            </div>
+            
+            <div class="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
+              <span class="text-lg font-semibold text-gray-700">Win Percentage:</span>
+              <span class="text-2xl font-bold text-purple-600">{{getWinPercentage(nbaRecord.wins, nbaRecord.losses)}}%</span>
+            </div>
+          </div>
+        } @else {
+          <p class="text-gray-500">Loading...</p>
+        }
+      </div>
+    </p-card>
+  </div>
+
+  <!-- Combined Stats Summary -->
+  @if (ncaaRecord && nbaRecord) {
+    <div class="mt-8 max-w-4xl mx-auto">
+      <p-card class="shadow-lg">
+        <div class="text-center">
+          <h2 class="text-2xl font-bold text-white mb-6">Overall Statistics</h2>
+          
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="p-4 bg-green-50 rounded-lg">
+              <div class="text-sm text-gray-600 mb-1">Total Wins</div>
+              <div class="text-3xl font-bold text-green-600">{{getOverallWins()}}</div>
+            </div>
+            
+            <div class="p-4 bg-red-50 rounded-lg">
+              <div class="text-sm text-gray-600 mb-1">Total Losses</div>
+              <div class="text-3xl font-bold text-red-600">{{getOverallLosses()}}</div>
+            </div>
+            
+            <div class="p-4 bg-blue-50 rounded-lg">
+              <div class="text-sm text-gray-600 mb-1">Total Games</div>
+              <div class="text-3xl font-bold text-blue-600">{{getOverallTotalGames()}}</div>
+            </div>
+            
+            <div class="p-4 bg-purple-50 rounded-lg">
+              <div class="text-sm text-gray-600 mb-1">Win %</div>
+              <div class="text-3xl font-bold text-purple-600">{{getOverallWinPercentage()}}%</div>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  }
+</div>

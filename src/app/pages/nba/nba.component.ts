@@ -50,6 +50,9 @@ export class NbaComponent {
 
   allTeams: NBATeam[] = []
   todaysGames: NBAGameSchedule[] = []
+  finishedGames: NBAGameSchedule[] = []
+  finishedMatchups: Matchup[] = []  // Add this
+  allMatchups: Matchup[] = []  // Combined array
 
   matchups: Matchup[] = [];
 
@@ -99,9 +102,15 @@ export class NbaComponent {
 
   calculateTodaysGames() {
     this.matchups = [];
+    this.finishedMatchups = [];  // Reset finished matchups
+    
+    this.finishedGames = this.todaysGames.filter((ele: NBAGameSchedule) => ele.Status === "Final");
+    this.processFinishedGames();
+
+    const todaysGames = this.todaysGames.filter((ele: NBAGameSchedule) => ele.Status !== "Final");
     const todaysMatchups: Array<[NBATeam, NBATeam, string]> = [];
 
-    for (const game of this.todaysGames) {
+    for (const game of todaysGames) {
       const homeTeamData = this.allTeams.find((team: NBATeam) => 
         team.Key?.toLowerCase().includes(game.HomeTeam.toLowerCase())
       );
@@ -153,11 +162,75 @@ export class NbaComponent {
       }
     }
     
+    // Combine finished and predictive games - ADD THIS LINE
+    this.allMatchups = [...this.finishedMatchups, ...this.matchups];
+    
     // Reset state
     this.leftWinner = false;
     this.rightWinner = false;
     this.spread = '';
     this.confidenceScore = undefined;
+  }
+
+  processFinishedGames() {
+    for (const game of this.finishedGames) {
+      const homeTeamData = this.allTeams.find((team: NBATeam) => 
+        team.Key?.toLowerCase().includes(game.HomeTeam.toLowerCase())
+      );
+      
+      const awayTeamData = this.allTeams.find((team: NBATeam) => 
+        team.Key?.toLowerCase().includes(game.AwayTeam.toLowerCase())
+      );
+
+      if (!homeTeamData || !awayTeamData) {
+        continue;
+      }
+
+      const homeTeamName = `${homeTeamData.City} ${homeTeamData.Name}`.toLowerCase();
+      const awayTeamName = `${awayTeamData.City} ${awayTeamData.Name}`.toLowerCase();
+
+      const homeFirestoreTeam = this.allFirestoreTeams.find((tm: NBATeam) => 
+        tm.team.toLowerCase().includes(homeTeamName)
+      );
+      
+      const awayFirestoreTeam = this.allFirestoreTeams.find((tm: NBATeam) => 
+        tm.team.toLowerCase().includes(awayTeamName)
+      );
+
+      if (!homeFirestoreTeam || !awayFirestoreTeam) {
+        continue;
+      }
+
+      const homeScore = game.HomeTeamScore ?? 0;
+      const awayScore = game.AwayTeamScore ?? 0;
+      const totalPoints = homeScore + awayScore;
+      const gameTime = new Date(game.DateTime).toLocaleTimeString();
+
+      const matchup: Matchup = {
+        leftTeam: `${homeFirestoreTeam.team}`,
+        leftRecord: `${homeFirestoreTeam.wins || 0}-${homeFirestoreTeam.losses || 0}`,
+        leftScore: homeScore,
+        leftSpread: "",
+        rightSpread: "",
+        totalPoints: totalPoints,
+        rightScore: awayScore,
+        rightRecord: `${awayFirestoreTeam.wins || 0}-${awayFirestoreTeam.losses || 0}`,
+        rightTeam: `${awayFirestoreTeam.team}`,
+        confidence: "Final",
+        gameTime: gameTime,
+        remove: "",
+        leftWikipediaLogoUrl: homeTeamData.WikipediaLogoUrl,
+        rightWikipediaLogoUrl: awayTeamData.WikipediaLogoUrl,
+        isFinished: true
+      };
+
+      // Calculate spreads for finished games
+      const spreads = this.utilsService.calculateSpreads(homeScore, awayScore, "");
+      matchup.leftSpread = spreads.leftSpread;
+      matchup.rightSpread = spreads.rightSpread;
+
+      this.finishedMatchups.push(matchup);
+    }
   }
 
   addMatchup(gameTime: string) {

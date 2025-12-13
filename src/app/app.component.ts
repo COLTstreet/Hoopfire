@@ -4,10 +4,12 @@ import { DataService } from './services/data.service';
 import { ButtonModule } from 'primeng/button';
 import { HeaderComponent } from './common/header/header.component';
 import { SplitButtonModule } from 'primeng/splitbutton';
+import { Divider } from 'primeng/divider';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, RouterModule, ButtonModule, HeaderComponent, SplitButtonModule],
+    imports: [RouterOutlet, RouterModule, ButtonModule, HeaderComponent, SplitButtonModule, Divider, TooltipModule],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
@@ -40,5 +42,15 @@ export class AppComponent {
 
   setActive(type: any) {
     type === 1 ? this._dataService.isNCAAActive.set(false) : this._dataService.isNCAAActive.set(true) 
+  }
+
+  get todayDate(): string {
+    const today = new Date();
+    return today.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
   }
 }

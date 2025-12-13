@@ -1,11 +1,23 @@
 <img src="assets/hoopfire-logo-2024.png" class="logo-img">
 <div class="px-2 py-6 md:px-6">
+    <!-- Stats Button -->
+    <div class="absolute right-6">
+        <p-button icon="pi pi-chart-bar" [rounded]="true" [text]="true" routerLink="/stats" severity="primary" pTooltip="Stats" />
+    </div>
+    <!-- Date Header -->
+    <div class="text-center mb-4">
+        <h2 class="text-2xl font-bold text-white mb-2">{{todayDate}}</h2>
+        <p class="text-sm text-white italic">Note: Games without statistical data will be skipped</p>
+    </div>
+    <p-divider />
     <div class="flex flex-row gap-1">
         <div class="basis-1/2">
-            <p-splitbutton routerLink="/ncaa" label="NCAA" dropdownIcon="pi pi-pencil" [model]="itemsNCAA" class="w-full" />
+            <p-splitbutton routerLink="/ncaa" label="NCAA" dropdownIcon="pi pi-pencil" [model]="itemsNCAA"
+                class="w-full" />
         </div>
         <div class="basis-1/2">
-            <p-splitbutton routerLink="/nba" label="NBA" dropdownIcon="pi pi-pencil" [model]="itemsNBA" class="w-full" />   
+            <p-splitbutton routerLink="/nba" label="NBA" dropdownIcon="pi pi-pencil" [model]="itemsNBA"
+                class="w-full" />
         </div>
     </div>
     <router-outlet></router-outlet>

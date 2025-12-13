@@ -3,6 +3,10 @@ export interface NBAGameSchedule {
   HomeTeam: string;
   AwayTeam: string;
   DateTime: string;
+  Status: string;
+  HomeTeamScore?: number | null;
+  AwayTeamScore?: number | null;
+  GameID?: number;
 }
 
 export interface NCAAGameSchedule {
@@ -10,5 +14,8 @@ export interface NCAAGameSchedule {
   GlobalAwayTeamID: number;
   DateTime: string;
   Status: string;
+  HomeTeamScore?: number | null;
+  AwayTeamScore?: number | null;
+  GameID?: number;
 }
 

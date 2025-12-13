@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Card } from 'primeng/card';
 import { Chip } from 'primeng/chip';
+import { Divider } from 'primeng/divider';
 import { combineLatest } from 'rxjs';
 
 declare var stringSimilarity: any
@@ -52,6 +53,7 @@ interface Matchup {
   remove?: string;
   leftTeamLogoUrl?: string;
   rightTeamLogoUrl?: string;
+  isFinished?: boolean; // Added for finished games
 }
 
 interface GameSchedule {
@@ -63,7 +65,7 @@ interface GameSchedule {
 
 @Component({
     selector: 'app-ncaa',
-    imports: [FormsModule, Card, Chip],
+    imports: [FormsModule, Card, Chip, Divider],
     templateUrl: './ncaa.component.html',
     styleUrl: './ncaa.component.scss',
     providers: [ConfirmationService, MessageService]
@@ -108,6 +110,9 @@ export class NCAAComponent implements OnInit {
   allTeamSeasonStats: any[] = []
   allTeams: Team[] = []
   todaysGames: GameSchedule[] = []
+  finishedGames: GameSchedule[] = []
+  finishedMatchups: Matchup[] = []  // Add this
+  allMatchups: Matchup[] = []  // Combined array
 
   matchups: Matchup[] = [];
 
@@ -220,6 +225,9 @@ export class NCAAComponent implements OnInit {
 
   calculateTodaysGames() {
     this.matchups = [];
+    this.finishedGames = this.todaysGames.filter((ele: GameSchedule) => ele.Status === "Final");
+    this.processFinishedGames();
+
     const todaysGames = this.todaysGames.filter((ele: GameSchedule) => ele.Status !== "Final");
     const todaysMatchups: Array<[Team, Team, string]> = [];
 
@@ -243,11 +251,63 @@ export class NCAAComponent implements OnInit {
       }
     }
     
+    // Combine finished and predictive games
+    this.allMatchups = [...this.finishedMatchups, ...this.matchups];
+    
     // Reset state
     this.leftWinner = false;
     this.rightWinner = false;
     this.spread = '';
     this.confidenceScore = undefined;
+  }
+
+  processFinishedGames() {
+    this.finishedMatchups = []; // Reset finished matchups
+    
+    for (const game of this.finishedGames) {
+      const homeTeam = this.setSelectedTeam(game.GlobalHomeTeamID);
+      const awayTeam = this.setSelectedTeam(game.GlobalAwayTeamID);
+      
+      if (homeTeam && awayTeam) {
+        const homeScore = (game as any).HomeTeamScore ?? 0;
+        const awayScore = (game as any).AwayTeamScore ?? 0;
+        const totalPoints = homeScore + awayScore;
+        const gameTime = new Date(game.DateTime).toLocaleTimeString();
+
+        const matchup: Matchup = {
+          leftTeam: homeTeam.team,
+          leftRecord: homeTeam.winLoss || '',
+          leftScore: homeScore,
+          leftSpread: "",
+          rightSpread: "",
+          totalPoints: totalPoints,
+          rightScore: awayScore,
+          rightRecord: awayTeam.winLoss || '',
+          rightTeam: awayTeam.team,
+          confidence: "Final",
+          location: homeTeam.homeTeam 
+            ? homeTeam.Stadium 
+            : awayTeam.Stadium,
+          gameTime: gameTime,
+          remove: "",
+          leftTeamLogoUrl: homeTeam.TeamLogoUrl,
+          rightTeamLogoUrl: awayTeam.TeamLogoUrl,
+          isFinished: true
+        };
+
+        // Calculate spreads for finished games
+        const scoreDiff = homeScore - awayScore;
+        if (scoreDiff > 0) {
+          matchup.leftSpread = `-${scoreDiff}`;
+          matchup.rightSpread = `+${scoreDiff}`;
+        } else if (scoreDiff < 0) {
+          matchup.leftSpread = `+${Math.abs(scoreDiff)}`;
+          matchup.rightSpread = `-${Math.abs(scoreDiff)}`;
+        }
+
+        this.finishedMatchups.push(matchup);
+      }
+    }
   }
 
   addMatchup(gameTime: string) {
