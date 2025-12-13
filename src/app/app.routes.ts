@@ -1,9 +1,4 @@
 import { Routes } from '@angular/router';
-import { NCAAComponent } from './pages/ncaa/ncaa.component';
-import { NbaComponent } from './pages/nba/nba.component';
-import { CustomGamesComponent } from './pages/custom-games/custom-games.component';
-import { CustomGamesNcaaComponent } from './pages/custom-games-ncaa/custom-games-ncaa.component';
-import { StatsComponent } from './pages/stats/stats.component';
 
 export const routes: Routes = [
     {
@@ -13,27 +8,27 @@ export const routes: Routes = [
     },
     {
       path: 'ncaa',
-      component: NCAAComponent,
+      loadComponent: () => import('./pages/ncaa/ncaa.component').then(m => m.NCAAComponent),
       pathMatch: 'full'
     },
     {
       path: 'nba',
-      component: NbaComponent,
+      loadComponent: () => import('./pages/nba/nba.component').then(m => m.NbaComponent),
       pathMatch: 'full'
     },
     {
       path: 'custom-games',
-      component: CustomGamesComponent,
+      loadComponent: () => import('./pages/custom-games/custom-games.component').then(m => m.CustomGamesComponent),
       pathMatch: 'full'
     },
     {
       path: 'custom-games-ncaa',
-      component: CustomGamesNcaaComponent,
+      loadComponent: () => import('./pages/custom-games-ncaa/custom-games-ncaa.component').then(m => m.CustomGamesNcaaComponent),
       pathMatch: 'full'
     },
     {
       path: 'stats',
-      component: StatsComponent,
+      loadComponent: () => import('./pages/stats/stats.component').then(m => m.StatsComponent),
       pathMatch: 'full'
     },
 ];
